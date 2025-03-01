@@ -1,5 +1,5 @@
-import { LoginForm } from "@/components/auth/login-form"
-import { Footer } from "@/components/landing-page/footer"
+import { LoginForm } from "@/components/auth/login-form";
+import { Footer } from "@/components/landing-page/footer";
 
 export default function LoginPage() {
   return (
@@ -13,5 +13,5 @@ export default function LoginPage() {
       </main>
       <Footer />
     </div>
-  )
+  );
 }

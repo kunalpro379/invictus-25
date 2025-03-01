@@ -45,7 +45,7 @@ export function SignupForm() {
       email: "",
       password: "",
       confirmPassword: "",
-      terms: false, // Ensures the checkbox starts as unchecked
+      terms: false,
     },
   });
 
@@ -55,24 +55,22 @@ export function SignupForm() {
       const nameParts = data.name.trim().split(" ");
       const firstName = nameParts[0] || "";
       const lastName = nameParts.slice(1).join(" ") || "";
-  
+
       const res = await axios.post("http://localhost:3000/api/v1/users/signup", {
         username: data.email,
         firstName,
         lastName,
         password: data.password,
       });
-  
+
       localStorage.setItem("token", res.data.token);
-      navigate("/");
+      navigate("/research-papers"); // Redirect to Research Papers after signup
     } catch (err) {
       alert(err.response?.data?.message || "Signup failed");
     } finally {
       setIsLoading(false);
     }
   };
-  
-  
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -146,16 +144,15 @@ export function SignupForm() {
 
           {/* Terms and Conditions Checkbox */}
           <div className="flex items-center space-x-2">
-          <Checkbox
-  id="terms"
-  checked={watch("terms")}
-  onCheckedChange={(val) => {
-    setValue("terms", val);
-    trigger("terms"); // ✅ Manually trigger validation
-  }}
-  {...register("terms")}
-/>
-
+            <Checkbox
+              id="terms"
+              checked={watch("terms")}
+              onCheckedChange={(val) => {
+                setValue("terms", val);
+                trigger("terms");
+              }}
+              {...register("terms")}
+            />
             <Label htmlFor="terms" className="text-sm font-normal">
               I agree to the{" "}
               <a href="/terms" className="text-primary hover:underline">

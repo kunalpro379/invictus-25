@@ -2,14 +2,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import axios from "axios"; // Import axios
+import axios from "axios";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useNavigate } from "react-router-dom"; // Ensure correct navigation
+import { useNavigate } from "react-router-dom";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -39,18 +39,17 @@ export function LoginForm() {
     setIsLoading(true);
     try {
       const res = await axios.post("http://localhost:3000/api/v1/users/signin", {
-        username: data.email, // Change "email" to "username"
+        username: data.email,
         password: data.password,
       });
       localStorage.setItem("token", res.data.token);
-      navigate("/");
+      navigate("/research-papers"); // Redirect to Research Papers after login
     } catch (err) {
       alert(err.response?.data?.message || "Sign-in failed");
     } finally {
       setIsLoading(false);
     }
-};
-
+  };
 
   return (
     <Card className="w-full max-w-md mx-auto">

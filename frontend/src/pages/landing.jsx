@@ -21,8 +21,6 @@ export default function LandingPage() {
 
   const navItems = [
     'Features',
-    'Research Papers',
-    'Datasets',
     'Testimonials',
     'Pricing'
   ];
@@ -52,36 +50,14 @@ export default function LandingPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                {item === 'Research Papers' ? (
-                  <Link
-                    to="/research-papers"
-                    className={`text-sm font-medium transition-colors duration-300 ${
-                      scrolled
-                        ? 'text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400'
-                        : 'text-white/90 hover:text-white'
-                    }`}
-                  >
-                    {item}
-                  </Link>
-                ) : item === 'Datasets' ? (
-                  <Link
-                    to="/datasets"
-                    className={`text-sm font-medium transition-colors duration-300 ${
-                      scrolled
-                        ? 'text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400'
-                        : 'text-white/90 hover:text-white'
-                    }`}
-                  >
-                    {item}
-                  </Link>
-                ) : (
+                {
                   <a
                     href={`#${item.toLowerCase()}`}
                     className={`text-sm font-medium transition-colors duration-300 ${scrolled ? "text-gray-400 hover:text-blue-400" : "text-white/90 hover:text-white"}`}
                   >
                     {item}
                   </a>
-                )}
+                }
               </motion.div>
             ))}
           </nav>

@@ -29,7 +29,7 @@ export function HeroSection() {
               <Zap className="inline-block h-4 w-4 mr-2" />
               ReSync
             </motion.div>
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl/none bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+            <h1 className="p-4 text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl/none bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
               Welcome to ReSync
             </h1>
             <p className="mx-auto max-w-lg text-lg leading-relaxed text-gray-100 md:text-xl">
