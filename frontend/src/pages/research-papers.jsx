@@ -26,7 +26,7 @@ import { Link } from "react-router-dom";
 import _ from "lodash"; // Make sure lodash is installed
 
 // CORE API key
-const API_KEY = "KwAZOaeTWLsY6z8NbhDvE17tSH3kJdBU";
+const API_KEY = "JkqyH1pgKdM8vFXAB6LxeZEozGQfcPOr";
 const CORE_API_URL = "https://api.core.ac.uk/v3";
 
 export default function ResearchPapers() {

@@ -1,5 +1,8 @@
 import os
 import json
+import subprocess
+import signal
+import sys
 from typing import List, Dict
 from datetime import datetime
 from werkzeug.utils import secure_filename
@@ -22,12 +25,16 @@ MAX_CONTENT_LENGTH = 32 * 1024 * 1024  # 32MB max file size
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Initialize Groq client
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = Groq(
+    api_key=os.getenv(
+        "GROQ_API_KEY", "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"
+    )
+)
 
 CHATBOT_SYSTEM_PROMPT = {
     "role": "system",
     "content": (
-        "You are ResearchBuddy, an AI expert in analyzing and discussing research papers. "
+        "You are ReSYNC.AI, an AI expert in analyzing and discussing research papers. "
         "You provide detailed answers about the research papers that have been uploaded. "
         "Use only information from the papers to answer questions. If a question cannot be answered "
         "based on the provided papers, politely state that the information is not in the papers. "
@@ -159,7 +166,7 @@ def get_response(session_id, user_input):
 
     try:
         completion = client.chat.completions.create(
-            model="deepseek-r1-chat",  # Using the Deepseek model via Groq
+            model="deepseek-r1-distill-llama-70b",  # Using the Deepseek model via Groq
             messages=conversation_history[session_id],
             temperature=0.7,
             max_tokens=1024,
@@ -309,6 +316,62 @@ def too_large(e):
     return jsonify({"error": "File is too large"}), 413
 
 
+# Global variable to store ngrok process
+ngrok_process = None
+
+
+# Start ngrok as a subprocess
+def start_ngrok(port, auth_token, domain):
+    global ngrok_process
+
+    # First, set the auth token
+    try:
+        auth_process = subprocess.run(
+            ["ngrok", "config", "add-authtoken", auth_token],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        print("Ngrok auth token set successfully")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to set ngrok auth token: {e.stderr}")
+        # Continue anyway as the token might already be set
+
+    # Start ngrok with custom domain
+    try:
+        ngrok_cmd = ["ngrok", "http", f"--domain={domain}", str(port)]
+
+        # Start ngrok as a subprocess
+        ngrok_process = subprocess.Popen(
+            ngrok_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+
+        print(f"Started ngrok tunnel to http://localhost:{port}")
+        print(f"Public URL: https://{domain}")
+
+        return True
+    except Exception as e:
+        print(f"Failed to start ngrok: {str(e)}")
+        return False
+
+
+# Function to kill ngrok process on exit
+def cleanup_ngrok():
+    global ngrok_process
+    if ngrok_process:
+        print("Shutting down ngrok tunnel...")
+        ngrok_process.terminate()
+        ngrok_process.wait()
+        print("Ngrok tunnel shut down")
+
+
+# Handle graceful shutdown
+def signal_handler(sig, frame):
+    print("Received shutdown signal, cleaning up...")
+    cleanup_ngrok()
+    sys.exit(0)
+
+
 # Create Flask application
 def create_app():
     app = Flask(__name__)
@@ -318,5 +381,24 @@ def create_app():
 
 
 if __name__ == "__main__":
+    # Set up signal handlers for graceful shutdown
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    # Create and configure the Flask app
     app = create_app()
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    port = 5000
+
+    # Ngrok configuration
+    auth_token = "2jPaChR96iyrZePxvJ9zGw6RcTN_sDfDHPEksi6qMAdC1LPo"
+    custom_domain = "macaw-blessed-centrally.ngrok-free.app"
+
+    # Start ngrok in a separate process
+    start_ngrok(port, auth_token, custom_domain)
+
+    try:
+        # Run the Flask app
+        app.run(debug=True, host="0.0.0.0", port=port)
+    finally:
+        # Clean up on exit
+        cleanup_ngrok()
