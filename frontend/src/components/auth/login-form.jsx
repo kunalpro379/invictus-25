@@ -38,7 +38,7 @@ export function LoginForm() {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      const res = await axios.post("/api/v1/users/signin", {
+      const res = await axios.post("http://localhost:3000/api/v1/users/signin", {
         username: data.email, // Change "email" to "username"
         password: data.password,
       });

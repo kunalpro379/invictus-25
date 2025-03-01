@@ -2,7 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const path = require("path");
-require("dotenv").config();
+require("dotenv").config({
+    path: path.resolve(__dirname, "../.env")
+});
 
 const rootRouter = require("./routes/index");
 
