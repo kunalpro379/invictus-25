@@ -47,7 +47,27 @@ const Sidebar = () => {
             Articles
           </NavLink>
           <NavLink
-            to="/profile"
+            to="/connections"
+            className={({ isActive }) =>
+              `block py-2.5 px-4 rounded transition duration-200 ${
+                isActive ? "bg-black/30 text-blue-600 text-gray-700" : "hover:bg-black/10 text-black"
+              }`
+            }
+          >
+            Connect
+          </NavLink>
+          <NavLink
+            to="/news"
+            className={({ isActive }) =>
+              `block py-2.5 px-4 rounded transition duration-200 ${
+                isActive ? "bg-black/30 text-blue-600 text-gray-700" : "hover:bg-black/10 text-black"
+              }`
+            }
+          >
+            News
+          </NavLink>
+          <NavLink
+            to="/update-profile"
             className={({ isActive }) =>
               `block py-2.5 px-4 rounded transition duration-200 ${
                 isActive ? "bg-black/30 text-blue-600 text-gray-700" : "hover:bg-black/10 text-black"

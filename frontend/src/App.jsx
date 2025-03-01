@@ -10,6 +10,9 @@ import DatasetDetail from "./pages/DatasetDetail";
 import AuthenticatedLayout from "./components/layout/authenticated-layout"; // Adjust path
 import Articles from "./pages/articles"; 
 import ProfileForm from "./pages/ProfileForm";
+import UpdateProfile from "./pages/update-profile";
+import News from "./pages/news";
+import Connections from "./pages/connections";
 
 
 const router = createBrowserRouter([
@@ -56,8 +59,20 @@ const router = createBrowserRouter([
         element: <ProfileForm />,
       },
       {
+        path: "/update-profile",
+        element: <UpdateProfile />, 
+      },
+      {
         path: "/articles",
         element: <Articles />,
+      },
+      {
+        path: "/news",
+        element: <News />,
+      },
+      {
+        path: "/connections",
+        element: <Connections />,
       },
     ],
   },
