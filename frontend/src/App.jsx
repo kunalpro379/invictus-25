@@ -33,7 +33,11 @@ const router = createBrowserRouter([
     element: <Datasets />,
   },
   {
-    path: "/datasets/upload",
+    path: "/dataset-upload",
+    element: <DatasetUpload />,
+  },
+  {
+    path: "/dataset/:id",
     element: <DatasetUpload />,
   },
 ]);

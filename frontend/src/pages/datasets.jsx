@@ -1,53 +1,214 @@
-import { useState } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Search,
-  Filter,
+  Upload,
   FileType,
   Calendar,
-  Upload,
-  Tag as TagIcon,
+  ChevronLeft,
+  ChevronRight,
+  BookOpen,
+  Database,
+  User,
+  Filter,
+  X,
 } from "lucide-react";
-import dummyData from "../data/dummyData.json";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+// Sample user data - in a real app, this would come from authentication
+const currentUser = {
+  id: "user123",
+  name: "Jane Researcher",
+  avatar: "https://i.pravatar.cc/300",
+};
 
 const Datasets = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("all");
+  const [datasets, setDatasets] = useState([]);
+  const [userDatasets, setUserDatasets] = useState([]);
+  const [allTags, setAllTags] = useState([]);
+  
+  const itemsPerPage = 20;
 
-  const allTags = [
-    ...new Set(dummyData.datasets.flatMap((dataset) => dataset.tags)),
-  ];
+  // Fetch OpenAlex data (simulated)
+  useEffect(() => {
+    const fetchOpenAlexData = async () => {
+      setIsLoading(true);
+      try {
+        // In a real implementation, you would fetch from OpenAlex API
+        // Example: const response = await fetch('https://api.openalex.org/works');
+        
+        // Simulating API call with timeout
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Generate sample OpenAlex-like data
+        const openAlexData = Array.from({ length: 50 }, (_, i) => ({
+          id: `oalex-${i + 1}`,
+          title: `OpenAlex Research Dataset ${i + 1}`,
+          description: `This is a comprehensive dataset about ${['genomics', 'climate science', 'neuroscience', 'machine learning', 'sustainable energy'][i % 5]} containing valuable research information.`,
+          tags: [
+            ['genomics', 'biology', 'dna'][i % 3],
+            ['research', 'academic', 'published'][i % 3],
+            ['open-access', 'peer-reviewed', 'cited'][i % 3]
+          ],
+          files: Array.from({ length: Math.floor(Math.random() * 10) + 1 }, (_, j) => ({
+            id: `file-${i}-${j}`,
+            name: `dataset-${i}-${j}.csv`,
+            size: Math.floor(Math.random() * 1000000),
+            type: ['CSV', 'JSON', 'XML', 'XLSX'][Math.floor(Math.random() * 4)]
+          })),
+          created_at: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString(),
+          source: 'OpenAlex',
+          citations: Math.floor(Math.random() * 1000),
+          author: [`Dr. ${['Smith', 'Johnson', 'Williams', 'Brown', 'Jones'][i % 5]}`, `Prof. ${['Lee', 'Garcia', 'Miller', 'Davis', 'Rodriguez'][i % 5]}`][i % 2],
+          institution: [`University of ${['Cambridge', 'Oxford', 'Stanford', 'MIT', 'Harvard'][i % 5]}`, `${['National', 'International', 'Global', 'Regional', 'Advanced'][i % 5]} Research Institute`][i % 2]
+        }));
+        
+        // Generate sample user datasets
+        const userDatasetsSample = Array.from({ length: 8 }, (_, i) => ({
+          id: `user-${i + 1}`,
+          title: `My Research Project ${i + 1}`,
+          description: `Personal dataset for my research on ${['neural networks', 'human behavior', 'molecular structures', 'environmental impacts', 'economic patterns'][i % 5]}.`,
+          tags: [
+            ['personal', 'private', 'collaborative'][i % 3],
+            ['experiment', 'analysis', 'survey'][i % 3],
+            ['draft', 'complete', 'in-progress'][i % 3]
+          ],
+          files: Array.from({ length: Math.floor(Math.random() * 5) + 1 }, (_, j) => ({
+            id: `user-file-${i}-${j}`,
+            name: `my-data-${i}-${j}.${['csv', 'json', 'xlsx', 'txt'][j % 4]}`,
+            size: Math.floor(Math.random() * 500000),
+            type: ['CSV', 'JSON', 'XLSX', 'TXT'][j % 4]
+          })),
+          created_at: new Date(2024, Math.floor(Math.random() * 3), Math.floor(Math.random() * 28) + 1).toISOString(),
+          source: 'User Upload',
+          author: currentUser.name,
+          isUserOwned: true
+        }));
+        
+        // Combine all datasets
+        setDatasets(openAlexData);
+        setUserDatasets(userDatasetsSample);
+        
+        // Extract all unique tags
+        const tags = new Set([
+          ...openAlexData.flatMap(dataset => dataset.tags),
+          ...userDatasetsSample.flatMap(dataset => dataset.tags)
+        ]);
+        setAllTags([...tags]);
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setIsLoading(false);
+      }
+    };
+    
+    fetchOpenAlexData();
+  }, []);
 
-  const filteredDatasets = dummyData.datasets.filter((dataset) => {
-    const matchesSearch =
-      dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dataset.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTags =
-      selectedTags.length === 0 ||
-      selectedTags.every((tag) => dataset.tags.includes(tag));
-    return matchesSearch && matchesTags;
-  });
+  // Filter datasets based on search query and selected tags
+  const getFilteredDatasets = () => {
+    const dataToFilter = activeTab === "all" 
+      ? [...datasets, ...userDatasets]
+      : activeTab === "user" 
+        ? userDatasets 
+        : datasets;
+    
+    return dataToFilter.filter((dataset) => {
+      const matchesSearch =
+        dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        dataset.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesTags =
+        selectedTags.length === 0 ||
+        selectedTags.every((tag) => dataset.tags.includes(tag));
+      return matchesSearch && matchesTags;
+    });
+  };
+
+  const filteredDatasets = getFilteredDatasets();
+  
+  // Pagination logic
+  const totalPages = Math.ceil(filteredDatasets.length / itemsPerPage);
+  const currentDatasets = filteredDatasets.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const toggleTag = (tag) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const clearFilters = () => {
+    setSelectedTags([]);
+    setSearchQuery("");
+    setCurrentPage(1);
+  };
+
+  // Card animation variants
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: i => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.05,
+        duration: 0.3
+      }
+    }),
+    exit: { opacity: 0, y: -20, transition: { duration: 0.2 } }
+  };
+
+  const getCardLink = (dataset) => {
+    // Only show edit link if dataset is user-owned AND we're in the "user" tab
+    if (dataset.isUserOwned && activeTab === "user") {
+      return `/dataset-upload?edit=${dataset.id}`;
+    }
+    // Otherwise show detailed view
+    return `/dataset/${dataset.id}`;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        {/* Header with Upload Button */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl md:text-5xl mb-4 md:mb-0">
             Research Datasets
           </h1>
           <Link to="/dataset-upload">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
               <Upload className="h-4 w-4 mr-2 inline-block align-middle" />
               Upload Dataset
             </Button>
@@ -55,100 +216,322 @@ const Datasets = () => {
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="mb-6">
-            <label htmlFor="search" className="sr-only">
-              Search
-            </label>
-            <div className="relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+        <Card className="mb-6 border-none shadow-md">
+          <CardContent className="p-6">
+            <div className="mb-6">
+              <label htmlFor="search" className="sr-only">
+                Search
+              </label>
+              <div className="relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
+                <Input
+                  id="search"
+                  type="text"
+                  placeholder="Search by title, description, or author..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 w-full"
+                />
               </div>
-              <Input
-                id="search"
-                type="text"
-                placeholder="Search datasets..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              />
             </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {allTags.map((tag) => (
-              <Badge
-                key={tag}
-                variant={selectedTags.includes(tag) ? "default" : "outline"}
-                className={`${
-                  selectedTags.includes(tag)
-                    ? "bg-blue-600 text-white"
-                    : "hover:bg-blue-50"
-                } text-sm font-medium px-2.5 py-0.5 rounded-full cursor-pointer`}
-                onClick={() => toggleTag(tag)}
-              >
-                {tag}
-              </Badge>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center mr-2">
+                <Filter className="h-4 w-4 text-gray-500 mr-1" />
+                <span className="text-sm font-medium text-gray-600">Filter by tags:</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {allTags.slice(0, 15).map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant={selectedTags.includes(tag) ? "default" : "outline"}
+                    className={`${
+                      selectedTags.includes(tag)
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "hover:bg-blue-50"
+                    } text-sm font-medium px-3 py-1 rounded-full cursor-pointer transition-colors duration-200`}
+                    onClick={() => toggleTag(tag)}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+                {allTags.length > 15 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Badge variant="outline" className="cursor-pointer hover:bg-blue-50">
+                        +{allTags.length - 15} more tags
+                      </Badge>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56 p-2 max-h-64 overflow-y-auto">
+                      {allTags.slice(15).map((tag) => (
+                        <DropdownMenuItem 
+                          key={tag}
+                          className={selectedTags.includes(tag) ? "bg-blue-50" : ""}
+                          onClick={() => toggleTag(tag)}
+                        >
+                          {tag}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+              
+              {(selectedTags.length > 0 || searchQuery) && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={clearFilters}
+                  className="ml-2 text-sm"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Clear filters
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Modified Tabs */}
+        <Tabs defaultValue="all" value={activeTab} onValueChange={(value) => {
+          setActiveTab(value);
+          setCurrentPage(1);
+        }} className="mb-6">
+          <TabsList className="grid w-full md:w-auto grid-cols-2 rounded-lg bg-gray-100 p-1">
+            <TabsTrigger 
+              value="all" 
+              className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              All Datasets
+            </TabsTrigger>
+            <TabsTrigger 
+              value="user" 
+              className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              <User className="h-4 w-4 mr-1.5" /> 
+              Your Uploads
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="mt-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">All Research Datasets</h2>
+              <span className="text-sm text-gray-500">
+                Showing {filteredDatasets.length} results
+              </span>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="user" className="mt-6">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <User className="h-5 w-5 mr-2 text-blue-600" />
+                  Your Uploaded Datasets
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">Datasets you've personally uploaded to the platform</p>
+              </div>
+              <span className="text-sm text-gray-500">
+                Showing {filteredDatasets.length} results
+              </span>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Card key={index} className="overflow-hidden">
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-3/4 mb-4" />
+                  <div className="flex gap-2 mb-4">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                  </div>
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-4 w-1/4" />
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        </div>
-
-        {/* Dataset Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDatasets.map((dataset) => (
-            <motion.div
-              key={dataset.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-lg shadow-md hover:shadow-lg overflow-hidden transform transition duration-300 ease-in-out"
-            >
-              <Link to={`/dataset/${dataset.id}`} className="block">
-                <div className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">
-                    {dataset.title}
-                  </h2>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                    {dataset.description}
-                  </p>
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {dataset.tags.map((tag, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-0.5 rounded-full"
+        ) : (
+          <>
+            {/* Modified Dataset Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              <AnimatePresence>
+                {currentDatasets.length > 0 ? (
+                  currentDatasets.map((dataset, index) => (
+                    <motion.div
+                      key={dataset.id}
+                      custom={index}
+                      variants={cardVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      layout
+                    >
+                      <Link 
+                        to={getCardLink(dataset)}
+                        className="block h-full"
                       >
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                  {/* File Info */}
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <FileType className="h-4 w-4 mr-1" />
-                      <span>{dataset.files.length} files</span>
+                        <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow duration-300 border-gray-200 bg-white">
+                          <CardHeader className={`pb-2 ${dataset.isUserOwned ? "bg-blue-50" : ""}`}>
+                            <div className="flex justify-between items-start">
+                              <CardTitle className="text-xl font-semibold text-gray-900 line-clamp-2">
+                                {dataset.title}
+                              </CardTitle>
+                              {dataset.isUserOwned && (
+                                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                                  Your Upload
+                                </Badge>
+                              )}
+                            </div>
+                            <CardDescription className="text-sm text-gray-500 flex items-center gap-1">
+                              <Database className="h-3 w-3" />
+                              {dataset.source || "Research Dataset"}
+                              {dataset.citations && ` • ${dataset.citations} citations`}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="pt-4">
+                            <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                              {dataset.description}
+                            </p>
+                            
+                            {/* Author & Institution */}
+                            {dataset.author && (
+                              <p className="text-gray-700 text-sm mb-3 font-medium">
+                                By: {dataset.author}
+                                {dataset.institution && ` • ${dataset.institution}`}
+                              </p>
+                            )}
+                            
+                            {/* Tags */}
+                            <div className="flex flex-wrap gap-1.5 mb-4">
+                              {dataset.tags.map((tag, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full"
+                                >
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                            
+                            {/* File Info */}
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <div className="flex items-center">
+                                <FileType className="h-3.5 w-3.5 mr-1" />
+                                <span>{dataset.files.length} {dataset.files.length === 1 ? 'file' : 'files'}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <Calendar className="h-3.5 w-3.5 mr-1" />
+                                <span>
+                                  {new Date(dataset.created_at).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </motion.div>
+                  ))
+                ) : (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-16"
+                  >
+                    <div className="bg-white rounded-lg shadow-sm p-8">
+                      <p className="text-gray-600 mb-4">
+                        No datasets found matching your criteria
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        onClick={clearFilters}
+                        className="text-sm"
+                      >
+                        Clear filters
+                      </Button>
                     </div>
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span>
-                        {new Date(dataset.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-        {/* No Results */}
-        {filteredDatasets.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-slate-600">
-              No datasets found matching your criteria
-            </p>
-          </div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center mt-8 space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-2.5"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => {
+                      // Show first page, last page, current page, and siblings
+                      return (
+                        page === 1 ||
+                        page === totalPages ||
+                        Math.abs(page - currentPage) <= 1
+                      );
+                    })
+                    .map((page, index, array) => {
+                      // Add ellipsis where needed
+                      const prevPage = array[index - 1];
+                      return (
+                        <Fragment key={page}>
+                          {prevPage && page - prevPage > 1 && (
+                            <span className="px-3 py-2 text-sm text-gray-500">…</span>
+                          )}
+                          <Button
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(page)}
+                            className={`min-w-8 h-8 px-3 text-sm ${
+                              currentPage === page 
+                                ? "bg-blue-600 text-white" 
+                                : "text-gray-600"
+                            }`}
+                          >
+                            {page}
+                          </Button>
+                        </Fragment>
+                      );
+                    })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-2.5"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -156,4 +539,3 @@ const Datasets = () => {
 };
 
 export default Datasets;
-
