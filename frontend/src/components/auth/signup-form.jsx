@@ -44,15 +44,25 @@ export function SignupForm() {
     },
   })
 
-  function onSubmit(data) {
-    setIsLoading(true)
-    // Simulate API call
-    console.log("Signup data:", data)
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 1500)
-    // Handle signup logic here
-  }
+  const onSubmit = async (data) => {
+    setIsLoading(true);
+    try {
+      const res = await axios.post("/api/v1/users/signup", {
+        username: data.email, // Change "email" to "username"
+        firstName: data.firstName,
+        lastName: data.lastName,
+        password: data.password,
+      });
+      localStorage.setItem("token", res.data.token);
+      navigate("/");
+    } catch (err) {
+      alert(err.response?.data?.message || "Signup failed");
+    } finally {
+      setIsLoading(false);
+    }
+};
+
+  
 
   return (
     <Card className="w-full max-w-md mx-auto">
