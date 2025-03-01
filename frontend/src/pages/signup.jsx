@@ -225,7 +225,7 @@ export default function SignupPage() {
               <Button
                 type="button"
                 onClick={handleProceed}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-md py-2 transition duration-200"
+                className="w-full bg-black hover:bg-gray-600 text-white rounded-md py-2 transition duration-200"
               >
                 Proceed
               </Button>
