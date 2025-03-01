@@ -19,6 +19,14 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const navItems = [
+    'Features',
+    'Research Papers',
+    'Datasets',
+    'Testimonials',
+    'Pricing'
+  ];
+
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       <header className={`fixed w-full z-50 transition-all duration-300 ${
@@ -49,7 +57,7 @@ export default function LandingPage() {
           </motion.div>
 
           <nav className="hidden md:flex items-center space-x-8">
-            {['Features', 'Research Papers', 'Testimonials', 'Pricing'].map((item) => (
+            {navItems.map((item) => (
               <motion.div
                 key={item}
                 whileHover={{ scale: 1.05 }}
@@ -58,6 +66,17 @@ export default function LandingPage() {
                 {item === 'Research Papers' ? (
                   <Link
                     to="/research-papers"
+                    className={`text-sm font-medium transition-colors duration-300 ${
+                      scrolled
+                        ? 'text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400'
+                        : 'text-white/90 hover:text-white'
+                    }`}
+                  >
+                    {item}
+                  </Link>
+                ) : item === 'Datasets' ? (
+                  <Link
+                    to="/datasets"
                     className={`text-sm font-medium transition-colors duration-300 ${
                       scrolled
                         ? 'text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400'
