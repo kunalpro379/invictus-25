@@ -1,4 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { motion } from "framer-motion";
 
 export function TestimonialSection() {
   const testimonials = [
@@ -10,65 +11,65 @@ export function TestimonialSection() {
       avatar: "AJ",
     },
     {
-      quote: "The authentication components worked flawlessly. Clean code and great UX out of the box.",
+      quote:
+        "The authentication components worked flawlessly. Clean code and great UX out of the box.",
       author: "Sarah Chen",
       role: "UX Designer",
       avatar: "SC",
     },
     {
-      quote: "We won our hackathon thanks to this starter kit. The modern UI components impressed the judges.",
+      quote:
+        "We won our hackathon thanks to this starter kit. The modern UI components impressed the judges.",
       author: "Michael Rodriguez",
       role: "Full Stack Developer",
       avatar: "MR",
     },
-  ]
+  ];
 
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-50">
-      <div className="container px-4 md:px-6 mx-auto">
-        <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          <div className="space-y-2">
-            <div className="inline-block rounded-lg bg-gray-100 px-3 py-1 text-sm">Testimonials</div>
-            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">Loved by Developers</h2>
-            <p className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              Don't just take our word for it. Here's what others have to say about our starter kit.
-            </p>
+    <section className="w-full py-16 md:py-24 lg:py-32 bg-gray-50 dark:bg-gray-900">
+      <div className="container px-4 md:px-6 mx-auto text-center">
+        <div className="space-y-2">
+          <div className="inline-block rounded-lg bg-gray-200 dark:bg-gray-800 px-4 py-1 text-sm font-medium">
+            Testimonials
           </div>
+          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white md:text-4xl">
+            Loved by Developers
+          </h2>
+          <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-300 md:text-lg">
+            Don't just take our word for it. Here's what others have to say about our starter kit.
+          </p>
         </div>
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3 lg:gap-12 py-8">
+
+        {/* Testimonials Grid */}
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-3 lg:gap-12 pt-10">
           {testimonials.map((testimonial, index) => (
-            <div key={index} className="flex flex-col items-center space-y-4 rounded-lg border p-6 shadow-sm bg-white">
-              <div className="relative">
-                <svg
-                  className="absolute -top-6 -left-6 h-12 w-12 text-gray-200"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M10 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5" />
-                  <path d="M19 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5" />
-                </svg>
-                <p className="text-gray-500 italic relative z-10">{testimonial.quote}</p>
-              </div>
+            <motion.div
+              key={index}
+              className="flex flex-col items-center space-y-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-md transition-transform duration-300 hover:scale-105"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.2 }}
+            >
+              <p className="text-gray-700 dark:text-gray-300 italic text-center">
+                "{testimonial.quote}"
+              </p>
               <div className="flex items-center space-x-4">
-                <Avatar>
+                <Avatar className="w-12 h-12 shadow-lg">
                   <AvatarImage src={`/placeholder.svg?height=40&width=40&text=${testimonial.avatar}`} />
-                  <AvatarFallback>{testimonial.avatar}</AvatarFallback>
+                  <AvatarFallback className="bg-blue-500 text-white">
+                    {testimonial.avatar}
+                  </AvatarFallback>
                 </Avatar>
-                <div>
-                  <h4 className="font-semibold">{testimonial.author}</h4>
-                  <p className="text-sm text-gray-500">{testimonial.role}</p>
+                <div className="text-left">
+                  <h4 className="font-semibold text-gray-900 dark:text-white">{testimonial.author}</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{testimonial.role}</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
     </section>
-  )
+  );
 }
-

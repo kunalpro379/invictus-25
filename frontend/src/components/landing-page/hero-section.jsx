@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 
 export function HeroSection() {
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-white to-gray-100">
+    <section className="text-gray-900 w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-white to-gray-100">
       <div className="container px-4 md:px-6 mx-auto">
         <div className="flex flex-col items-center space-y-4 text-center">
           <div className="space-y-2">
@@ -15,10 +15,10 @@ export function HeroSection() {
             </p>
           </div>
           <div className="space-x-4">
-            <Button size="lg" className="px-8">
+            <Button size="lg" className="px-8 bg-blue-600 text-white ">
               Get Started
             </Button>
-            <Button size="lg" variant="outline" className="px-8">
+            <Button size="lg" variant="outline" className="px-8 bg-blue-600 text-white ">
               Learn More
             </Button>
           </div>
