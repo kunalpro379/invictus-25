@@ -6,7 +6,6 @@ const connectDB = async () => {
         await mongoose.connect(process.env.MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 5000,  
         });
         console.log("✅ Connected to MongoDB");
     } catch (err) {
@@ -14,13 +13,11 @@ const connectDB = async () => {
         process.exit(1);  
     }
 };
-connectDB();  
 
-mongoose.set("debug", true);  // Enable query logging
+connectDB();
 
 const { User } = require('./schemas/users.schema');
-const { Account } = require('./schemas/account.schema');
 
 module.exports = {
-    User, Account
+    User
 };

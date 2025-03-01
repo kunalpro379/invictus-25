@@ -1,14 +1,9 @@
-// JWT -> Header, Payload, Signature
-// Signing:
-// (Header+Payload) + (Secret) => JWT ---> Client
-// Verifying:
-// (JWT+Og Signature)-->(HEader+payload)+(Secret)=>JWT Sign.
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 
 const generateToken = (user) => {
-  return jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN, // Token expiry time
+  return jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "1d", // Token expiry time
   });
 };
 

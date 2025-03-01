@@ -27,8 +27,7 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim: true,
         maxLength: 30,
-    },
-    account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' }
+    }
 });
 
 const User = mongoose.model('User', userSchema);
