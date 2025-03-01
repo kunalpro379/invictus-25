@@ -1,30 +1,64 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
+import heroSectionBg from "../../assets/hero-section-bg.jpg"; // Adjust path as needed
+import { motion } from "framer-motion";
+import { Zap } from "lucide-react"; // Adding an icon for the badge
 
 export function HeroSection() {
   return (
-    <section className="text-gray-900 w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-white to-gray-100">
-      <div className="container px-4 md:px-6 mx-auto">
-        <div className="flex flex-col items-center space-y-4 text-center">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
-              Your Ultimate Hackathon Starter Kit
+    <section
+      className="relative w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-cover bg-center overflow-hidden"
+      style={{ backgroundImage: `url(${heroSectionBg})` }}
+    >
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent z-0"></div>
+
+      <div className="container px-4 md:px-6 mx-auto relative z-10">
+        <div className="flex flex-col items-center space-y-8 text-center text-white">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="space-y-4"
+          >
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="bg-white/60 text-blue-900 inline-block rounded-lg bg-blue-100/20 px-4 py-2 text-sm font-semibold tracking-wider text-blue-300 uppercase"
+            >
+              <Zap className="inline-block h-4 w-4 mr-2" />
+              ReSync
+            </motion.div>
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl/none bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+              Welcome to ReSync
             </h1>
-            <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl">
-              Get ahead of the competition with our pre-built components and templates. Start building your project in
-              minutes, not hours.
+            <p className="mx-auto max-w-lg text-lg leading-relaxed text-gray-100 md:text-xl">
+              Unite fragmented research with a centralized platform for discovering articles, datasets, and experts.
+              Enhance collaboration with AI-driven insights and real-time tools.
             </p>
-          </div>
-          <div className="space-x-4">
-            <Button size="lg" className="px-8 bg-blue-600 text-white ">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+            className="space-x-6"
+          >
+            <Button
+              size="lg"
+              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 rounded-lg shadow-md transition-all duration-300"
+            >
               Get Started
             </Button>
-            <Button size="lg" variant="outline" className="px-8 bg-blue-600 text-white ">
+            <Button
+              size="lg"
+              variant="outline"
+              className="px-8 py-3 bg-transparent text-white border-white hover:bg-white hover:text-blue-600 rounded-lg shadow-md transition-all duration-300"
+            >
               Learn More
             </Button>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
-  )
+  );
 }
-
