@@ -115,5 +115,64 @@ router.get("/me", authMiddleware, async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
+// Add this to your existing router file after the /me endpoint
+
+const updateUserBody = zod.object({
+    shortBio: zod.string().max(2000).optional(),
+    interests: zod.string().optional(),
+    instituteName: zod.string().optional(),
+    papers: zod.array(
+        zod.object({
+            name: zod.string(),
+            url: zod.string().url(),
+        })
+    ).optional(),
+});
+
+router.put("/update", authMiddleware, async (req, res) => {
+    try {
+        const validation = updateUserBody.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ 
+                message: "Invalid input data", 
+                errors: validation.error.errors 
+            });
+        }
+
+        const { shortBio, interests, instituteName, papers } = req.body;
+        
+        // Create an update object with only the fields that are provided
+        const updateData = {};
+        if (shortBio !== undefined) updateData.shortBio = shortBio;
+        if (interests !== undefined) updateData.interests = interests;
+        if (instituteName !== undefined) updateData.instituteName = instituteName;
+        if (papers !== undefined) updateData.papers = papers;
+
+        // Check if there's anything to update
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ message: "No valid fields to update" });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.userId,
+            updateData,
+            { new: true, runValidators: true }
+        ).select("-password");
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({ 
+            message: "User updated successfully", 
+            user: updatedUser 
+        });
+    } catch (error) {
+        console.error("Update User Error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
 module.exports = router;
 
