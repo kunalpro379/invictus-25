@@ -1,5 +1,5 @@
-import React from "react";
-import { useParams, Link } from "react-router-dom";
+import React, { useState, useEffect, Suspense } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,18 +30,213 @@ import datasetJson from "../data/datasets.json";
 
 const DatasetDetail = () => {
   const { id } = useParams();
-  const dataset = datasetJson; // Using the imported JSON data
+  const navigate = useNavigate();
+  const [dataset, setDataset] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchDataset = async () => {
+      setLoading(true);
+      try {
+        if (!id) {
+          navigate("/datasets");
+          return;
+        }
+
+        // Check if this is an OpenAlex ID
+        if (id.startsWith('oalex-')) {
+          try {
+            const workId = id.replace('oalex-', '');
+            // Ensure clean ID format
+            const cleanId = workId.replace('https://openalex.org/', '');
+            
+            const response = await fetch(`https://api.openalex.org/works/${cleanId}`);
+            if (!response.ok) throw new Error('Dataset not found');
+            const data = await response.json();
+            
+            // Transform OpenAlex data
+            setDataset({
+              id: id,
+              title: data.title,
+              description: data.abstract || "No description available",
+              overview: {
+                source: "OpenAlex",
+                last_updated: new Date(data.updated_date).toLocaleDateString(),
+                total_rows: data.referenced_works?.length || 0,
+                total_columns: data.concepts?.length || 0,
+                data_format: ["PDF", "Metadata"],
+                authors: data.authorships?.map(a => a.author.display_name) || [],
+                citations: data.cited_by_count || 0,
+                published_date: new Date(data.publication_date).toLocaleDateString()
+              },
+              tags: data.concepts?.map(c => ({
+                name: c.display_name,
+                score: c.score,
+                level: c.level
+              })) || [],
+              files: [
+                ...(data.open_access?.oa_url ? [{
+                  name: "Full Text PDF",
+                  url: data.open_access.oa_url,
+                  type: "PDF"
+                }] : []),
+                ...(data.primary_location?.pdf_url ? [{
+                  name: "Alternative PDF",
+                  url: data.primary_location.pdf_url,
+                  type: "PDF"
+                }] : []),
+                ...(data.doi ? [{
+                  name: "DOI Link",
+                  url: `https://doi.org/${data.doi}`,
+                  type: "DOI"
+                }] : [])
+              ],
+              sample_data: {
+                columns: data.concepts?.map(c => ({ 
+                  name: c.display_name,
+                  type: "concept",
+                  description: c.level
+                })) || [],
+                preview: []
+              },
+              data_dictionary: [
+                {
+                  column: "Title",
+                  type: "text",
+                  description: "Research work title",
+                  example: data.title
+                },
+                {
+                  column: "Abstract",
+                  type: "text",
+                  description: "Research abstract",
+                  example: data.abstract?.substring(0, 100) + "..."
+                },
+                ...(data.concepts?.map(c => ({
+                  column: c.display_name,
+                  type: "concept",
+                  description: `Level ${c.level} concept`,
+                  example: `Score: ${c.score?.toFixed(2)}`
+                })) || [])
+              ],
+              download_info: {
+                download_link: data.open_access?.oa_url || `https://doi.org/${data.doi}`,
+                license_type: data.open_access?.license || "Unknown",
+                attribution: `Cite as: ${data.authorships?.[0]?.author?.display_name || "Authors"} (${new Date(data.publication_date).getFullYear()})`
+              },
+              use_cases: [
+                "Research Reference",
+                "Literature Review",
+                "Citation Analysis",
+                "Bibliometric Studies"
+              ],
+              user_feedback: {
+                comments: [],
+                faqs: [
+                  {
+                    question: "How do I cite this work?",
+                    answer: `Use the DOI: ${data.doi}`
+                  },
+                  {
+                    question: "Is this open access?",
+                    answer: data.open_access?.is_oa ? "Yes" : "No"
+                  }
+                ]
+              }
+            });
+          } catch (err) {
+            throw new Error(`Failed to fetch OpenAlex dataset: ${err.message}`);
+          }
+        } else {
+          try {
+            // Try local storage first
+            const localDataset = localStorage.getItem(`dataset-${id}`);
+            if (localDataset) {
+              setDataset(JSON.parse(localDataset));
+            } else {
+              const response = await fetch(`/api/datasets/${id}`);
+              if (!response.ok) throw new Error('Dataset not found');
+              const data = await response.json();
+              setDataset(data);
+            }
+          } catch (err) {
+            throw new Error(`Failed to fetch user dataset: ${err.message}`);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching dataset:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDataset();
+  }, [id, navigate]);
+
+  const renderExternalLinkButton = (dataset) => {
+    if (dataset.url || dataset.download_info?.download_link) {
+      return (
+        <Button className="ml-4" variant="outline" asChild>
+          <a 
+            href={dataset.url || dataset.download_info.download_link} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center"
+          >
+            <BookOpen className="h-4 w-4 mr-2" />
+            View Original Source
+          </a>
+        </Button>
+      );
+    }
+    return null;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse space-y-4">
+            {/* Add loading skeleton UI here */}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-2xl font-bold text-red-600">Error: {error}</h1>
+          <Link to="/datasets">
+            <Button variant="ghost" className="mt-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Datasets
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dataset) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* Back Button */}
-        <Link to="/datasets">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Datasets
-          </Button>
-        </Link>
+        {/* Header with Back Button and External Link */}
+        <div className="flex items-center justify-between mb-6">
+          <Link to="/datasets">
+            <Button variant="ghost">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Datasets
+            </Button>
+          </Link>
+          {renderExternalLinkButton(dataset)}
+        </div>
 
         {/* Dataset Header */}
         <div className="mb-8">
@@ -65,8 +260,8 @@ const DatasetDetail = () => {
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-8">
           {dataset.tags.map((tag) => (
-            <Badge key={tag} variant="secondary">
-              {tag}
+            <Badge key={tag.name} variant="secondary">
+              {tag.name}
             </Badge>
           ))}
         </div>
@@ -161,22 +356,43 @@ const DatasetDetail = () => {
             {/* Download Card */}
             <Card>
               <CardHeader>
-                <CardTitle>Download Dataset</CardTitle>
+                <CardTitle>Access Dataset</CardTitle>
               </CardHeader>
               <CardContent>
-                <Button className="w-full mb-4" asChild>
-                  <a href={dataset.download_info.download_link} target="_blank" rel="noopener noreferrer">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Files
-                  </a>
-                </Button>
-                <div className="text-sm text-gray-500">
-                  <p className="mb-2">
-                    <span className="font-medium">License:</span> {dataset.download_info.license_type}
-                  </p>
-                  <p>
-                    <span className="font-medium">Attribution:</span> {dataset.download_info.attribution}
-                  </p>
+                <div className="space-y-4">
+                  {dataset.download_info?.download_link && (
+                    <Button className="w-full" asChild>
+                      <a 
+                        href={dataset.download_info.download_link} 
+                        download 
+                        className="flex items-center justify-center"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Files
+                      </a>
+                    </Button>
+                  )}
+                  {dataset.url && (
+                    <Button className="w-full" variant="outline" asChild>
+                      <a 
+                        href={dataset.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center"
+                      >
+                        <BookOpen className="h-4 w-4 mr-2" />
+                        View on Original Platform
+                      </a>
+                    </Button>
+                  )}
+                  <div className="text-sm text-gray-500">
+                    <p className="mb-2">
+                      <span className="font-medium">License:</span> {dataset.download_info?.license_type || "Not specified"}
+                    </p>
+                    <p>
+                      <span className="font-medium">Attribution:</span> {dataset.download_info?.attribution || "Not specified"}
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -237,4 +453,25 @@ const DatasetDetail = () => {
   );
 };
 
-export default DatasetDetail;
+// Wrap the export with Suspense
+export default function DatasetDetailWrapper() {
+  return (
+    <Suspense fallback={<LoadingPlaceholder />}>
+      <DatasetDetail />
+    </Suspense>
+  );
+}
+
+function LoadingPlaceholder() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-4 bg-gray-200 rounded w-full"></div>
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
