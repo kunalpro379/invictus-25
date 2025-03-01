@@ -1,367 +1,351 @@
 import os
-import requests
 from flask import Flask, request, jsonify
+import requests
 from urllib.parse import quote
-import time
 
 app = Flask(__name__)
 
-# OpenAlex API base URL
-OPENALEX_API_BASE = "https://api.openalex.org/v1"
-
-# Map of resource types
-RESOURCE_TYPES = {"papers": "works", "articles": "works", "datasets": "works"}
-
-# Cache for concept IDs to avoid repeated API calls
-concept_cache = {}
+# API configuration
+OPEN_ALEX_BASE_URL = "https://api.openalex.org"
+CORE_API_BASE_URL = "https://api.core.ac.uk/v3"
+CORE_API_KEY = "KwAZOaeTWLsY6z8NbhDvE17tSH3kJdBU"  # Using the provided key
+EMAIL = os.environ.get("EMAIL", "user@example.com")  # For OpenAlex polite pool
 
 
-def get_concept_id(field):
-    """
-    Get OpenAlex concept ID for a given field by searching the concepts endpoint
-    """
-    # Check cache first
-    if field in concept_cache:
-        return concept_cache[field]
+# Helper function for OpenAlex API requests
+def make_openAlex_request(endpoint, params=None):
+    if params is None:
+        params = {}
 
-    # Search for the concept using the OpenAlex API
-    search_url = f"{OPENALEX_API_BASE}/concepts"
-    params = {"search": field, "per_page": 1}  # We only need the top match
+    params["mailto"] = EMAIL
+    url = f"{OPEN_ALEX_BASE_URL}/{endpoint}"
+    response = requests.get(url, params=params)
 
-    # Add email for polite pool if configured
-    if os.environ.get("OPENALEX_EMAIL"):
-        params["email"] = os.environ.get("OPENALEX_EMAIL")
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return {
+            "error": f"OpenAlex API request failed with status code {response.status_code}"
+        }
+
+
+# Helper function for CORE API requests
+def make_core_request(endpoint, data=None):
+    headers = {
+        "Authorization": f"Bearer {CORE_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    url = f"{CORE_API_BASE_URL}/{endpoint}"
 
     try:
-        response = requests.get(search_url, params=params)
-        response.raise_for_status()
+        response = requests.post(url, headers=headers, json=data)
 
-        data = response.json()
-
-        if data["meta"]["count"] > 0:
-            concept_id = data["results"][0]["id"]
-            concept_name = data["results"][0]["display_name"]
-
-            # Store in cache
-            concept_cache[field] = {"id": concept_id, "name": concept_name}
-
-            return {"id": concept_id, "name": concept_name}
+        if response.status_code in [200, 201]:
+            return response.json()
         else:
-            return None
+            # Log the error for debugging
+            print(f"CORE API Error: {response.status_code}")
+            print(f"Response: {response.text}")
+            return {
+                "error": f"CORE API request failed with status code {response.status_code}",
+                "details": response.text,
+            }
+    except Exception as e:
+        return {"error": f"Exception occurred: {str(e)}"}
 
-    except requests.exceptions.RequestException:
-        return None
 
+# Clean CORE works data
+def clean_works_data(raw_data):
+    cleaned_results = []
 
-@app.route("/api/<resource_type>", methods=["GET"])
-def get_resources(resource_type):
-    """
-    Get resources (papers, articles, datasets) based on fields or search query
+    for item in raw_data.get("results", []):
+        authors = []
+        for author in item.get("authors", []):
+            authors.append({"name": author.get("name", "")})
 
-    Endpoints:
-    - /api/papers?fields=math,physics,ai
-    - /api/articles?fields=bio
-    - /api/datasets?fields=ml,nlp,python,math,computer vision,physics
-    - /api/papers?search=how to find the laplacian inverse
-    """
+        # Get DOI from identifiers if available
+        doi = None
+        if "identifiers" in item and "doi" in item["identifiers"]:
+            doi = item["identifiers"]["doi"][0] if item["identifiers"]["doi"] else None
 
-    if resource_type not in RESOURCE_TYPES:
-        return (
-            jsonify(
-                {
-                    "error": f"Invalid resource type: {resource_type}. Use one of: papers, articles, datasets"
-                }
+        cleaned_item = {
+            "id": item.get("id", ""),
+            "title": item.get("title", ""),
+            "abstract": item.get("abstract", ""),
+            "authors": authors,
+            "publication_year": item.get("year"),
+            "doi": doi,
+            "download_url": item.get("downloadUrl"),
+            "language": (
+                item.get("language", {}).get("name")
+                if isinstance(item.get("language"), dict)
+                else item.get("language")
             ),
-            400,
-        )
+            "publisher": item.get("publisher", ""),
+            "subjects": (
+                [subject.get("name", "") for subject in item.get("subjects", [])]
+                if isinstance(item.get("subjects"), list)
+                else []
+            ),
+            "type": (
+                item.get("documentType", {}).get("name", "Unknown")
+                if isinstance(item.get("documentType"), dict)
+                else item.get("documentType", "Unknown")
+            ),
+        }
+        cleaned_results.append(cleaned_item)
 
-    openalex_resource = RESOURCE_TYPES[resource_type]
+    return {
+        "results": cleaned_results,
+        "total_count": raw_data.get("totalHits", 0),
+        "page": raw_data.get("page", 1),
+        "page_size": len(cleaned_results),
+        "total_pages": (raw_data.get("totalHits", 0) + 24) // 25,  # Ceiling division
+    }
 
-    # Build the OpenAlex API URL based on query parameters
-    api_url = f"{OPENALEX_API_BASE}/{openalex_resource}"
 
-    # Set up query parameters for OpenAlex API
-    params = {"per_page": 25}
+# Clean CORE journals data
+def clean_journals_data(raw_data):
+    cleaned_results = []
 
-    # Add email for polite pool if configured
-    if os.environ.get("OPENALEX_EMAIL"):
-        params["email"] = os.environ.get("OPENALEX_EMAIL")
+    for item in raw_data.get("results", []):
+        # Handle ISSN data safely
+        issn_list = []
+        if (
+            "identifiers" in item
+            and "issn" in item["identifiers"]
+            and isinstance(item["identifiers"]["issn"], list)
+        ):
+            issn_list = item["identifiers"]["issn"]
 
-    # Handle fields parameter
-    fields = request.args.get("fields")
-    search_query = request.args.get("search")
+        # Handle subjects safely
+        subjects = []
+        if "subjects" in item and isinstance(item["subjects"], list):
+            subjects = [subject.get("name", "") for subject in item["subjects"]]
 
-    filter_parts = []
+        cleaned_item = {
+            "id": item.get("id", ""),
+            "title": item.get("title", ""),
+            "publisher": item.get("publisher", ""),
+            "issn": issn_list,
+            "subjects": subjects,
+            "language": item.get("language", ""),
+            "country": item.get("country", ""),
+            "url": item.get("url", ""),
+        }
+        cleaned_results.append(cleaned_item)
 
-    # For datasets, add a type filter
-    if resource_type == "datasets":
-        filter_parts.append("type:dataset")
+    return {
+        "results": cleaned_results,
+        "total_count": raw_data.get("totalHits", 0),
+        "page": raw_data.get("page", 1),
+        "page_size": len(cleaned_results),
+        "total_pages": (raw_data.get("totalHits", 0) + 24) // 25,  # Ceiling division
+    }
 
-    # Process fields if provided
-    missing_fields = []
-    resolved_concepts = []
 
-    if fields:
-        field_list = [f.strip() for f in fields.split(",")]
-        concept_ids = []
+# Clean OpenAlex datasets data
+def clean_datasets_data(raw_data):
+    cleaned_results = []
 
-        for field in field_list:
-            # Get concept ID for the field
-            concept = get_concept_id(field)
-
-            if concept:
-                concept_ids.append(concept["id"])
-                resolved_concepts.append(
+    for item in raw_data.get("results", []):
+        authors = []
+        for author in item.get("authorships", []):
+            if "author" in author and "display_name" in author["author"]:
+                authors.append(
                     {
-                        "field": field,
-                        "concept_name": concept["name"],
-                        "concept_id": concept["id"],
+                        "name": author["author"]["display_name"],
+                        "id": author["author"].get("id"),
                     }
                 )
-            else:
-                missing_fields.append(field)
 
-        if concept_ids:
-            # Add concept.id filter for each field (using OR logic)
-            concept_filter = " | ".join([f"concept.id:{cid}" for cid in concept_ids])
-            filter_parts.append(f"({concept_filter})")
+        cleaned_item = {
+            "id": item.get("id"),
+            "title": item.get("title"),
+            "abstract": item.get("abstract"),
+            "authors": authors,
+            "publication_date": item.get("publication_date"),
+            "doi": item.get("doi"),
+            "url": item.get("primary_location", {}).get("landing_page_url"),
+            "concepts": [
+                {"name": concept.get("display_name"), "score": concept.get("score")}
+                for concept in item.get("concepts", [])[
+                    :5
+                ]  # Only include top 5 concepts
+            ],
+        }
+        cleaned_results.append(cleaned_item)
 
-    # Combine all filters with AND logic
-    if filter_parts:
-        params["filter"] = ",".join(filter_parts)
+    return {
+        "results": cleaned_results,
+        "total_count": raw_data.get("meta", {}).get("count", 0),
+        "page": int(raw_data.get("meta", {}).get("page", 1)),
+        "page_size": len(cleaned_results),
+        "total_pages": (raw_data.get("meta", {}).get("count", 0) + 24)
+        // 25,  # Ceiling division
+    }
 
-    # Handle search parameter
+
+# Clean OpenAlex concepts data
+def clean_concepts_data(raw_data):
+    cleaned_results = []
+
+    for item in raw_data.get("results", []):
+        cleaned_item = {
+            "id": item.get("id"),
+            "display_name": item.get("display_name"),
+            "level": item.get("level"),
+            "wikidata_id": item.get("wikidata"),
+        }
+        cleaned_results.append(cleaned_item)
+
+    return {"results": cleaned_results}
+
+
+# Endpoint to get research papers (using CORE API)
+@app.route("/api/papers", methods=["GET"])
+def get_papers():
+    page = int(request.args.get("page", "1"))
+    per_page = 25
+    search_query = request.args.get("search", "")
+
+    # Using CORE search endpoint with correct structure
+    data = {
+        "query": search_query if search_query else "*",
+        "page": page,
+        "pageSize": per_page,
+        "scrollId": None,  # Include this explicitly for the first request
+    }
+
+    # Add filters only if they're actually needed
+    if search_query:
+        data["searchType"] = "fulltext"
+
+    result = make_core_request("search/works", data=data)
+
+    # Check if there's an error and return information for debugging
+    if "error" in result:
+        return jsonify(result)
+
+    # Clean and format the response
+    return jsonify(clean_works_data(result))
+
+
+# Endpoint to get articles (using CORE API for journals)
+@app.route("/api/articles", methods=["GET"])
+def get_articles():
+    page = int(request.args.get("page", "1"))
+    per_page = 25
+    search_query = request.args.get("search", "")
+
+    # Using CORE journals endpoint with correct structure
+    data = {
+        "query": search_query if search_query else "*",
+        "page": page,
+        "pageSize": per_page,
+    }
+
+    result = make_core_request("search/journals", data=data)
+
+    # Check if there's an error and return information for debugging
+    if "error" in result:
+        return jsonify(result)
+
+    # Clean and format the response
+    return jsonify(clean_journals_data(result))
+
+
+# Endpoint to get datasets (using OpenAlex API)
+@app.route("/api/datasets", methods=["GET"])
+def get_datasets():
+    page = request.args.get("page", "1")
+    per_page = 25
+    search_query = request.args.get("search", "")
+
+    params = {"page": page, "per-page": per_page, "filter": "type:dataset"}
+
     if search_query:
         params["search"] = search_query
 
-    # If neither fields nor search are provided, return an error
-    if not fields and not search_query:
-        return (
-            jsonify({"error": "Please provide either 'fields' or 'search' parameter"}),
-            400,
-        )
+    result = make_openAlex_request("works", params)
 
-    # If all fields were invalid, return an error
-    if fields and not resolved_concepts and not search_query:
-        return (
-            jsonify(
-                {"error": f"Could not find any matching concepts for fields: {fields}"}
-            ),
-            400,
-        )
-
-    try:
-        # Make request to OpenAlex API
-        response = requests.get(api_url, params=params)
-        response.raise_for_status()
-
-        data = response.json()
-
-        # Process the response to return a simplified version
-        results = []
-        for item in data.get("results", []):
-            processed_item = {
-                "id": item.get("id"),
-                "title": item.get("title"),
-                "type": item.get("type"),
-                "publication_date": item.get("publication_date"),
-                "open_access": item.get("open_access", {}).get("is_oa", False),
-                "url": item.get("doi") if item.get("doi") else item.get("id"),
-                "authors": [
-                    author.get("author", {}).get("display_name")
-                    for author in item.get("authorships", [])[:3]
-                ],
-                "concepts": [
-                    {"name": concept.get("display_name"), "score": concept.get("score")}
-                    for concept in item.get("concepts", [])[:5]
-                ],
-            }
-
-            # Add abstract if available
-            if item.get("abstract_inverted_index"):
-                # Convert inverted index to text (simplified approach)
-                abstract_words = []
-                for word, positions in item.get("abstract_inverted_index", {}).items():
-                    for pos in positions:
-                        while len(abstract_words) <= pos:
-                            abstract_words.append("")
-                        abstract_words[pos] = word
-                processed_item["abstract"] = " ".join(abstract_words)
-
-            results.append(processed_item)
-
-        return jsonify(
-            {
-                "results": results,
-                "meta": {
-                    "count": data.get("meta", {}).get("count", 0),
-                    "page": data.get("meta", {}).get("page", 1),
-                    "per_page": data.get("meta", {}).get("per_page", 25),
-                    "total_pages": data.get("meta", {}).get("count", 0)
-                    // data.get("meta", {}).get("per_page", 25)
-                    + 1,
-                },
-                "query_info": {
-                    "resolved_concepts": resolved_concepts,
-                    "unmatched_fields": missing_fields,
-                },
-            }
-        )
-
-    except requests.exceptions.RequestException as e:
-        return (
-            jsonify({"error": f"Error fetching data from OpenAlex API: {str(e)}"}),
-            500,
-        )
+    # Clean and format the response
+    if "error" not in result:
+        return jsonify(clean_datasets_data(result))
+    return jsonify(result)
 
 
-@app.route("/api/fields/suggest", methods=["GET"])
-def suggest_fields():
-    """
-    Suggest concepts/fields based on a query string
+# Endpoint to search concepts with autocomplete (using OpenAlex API)
+@app.route("/api/concepts/autocomplete", methods=["GET"])
+def autocomplete_concepts():
+    query = request.args.get("query", "")
 
-    Endpoint:
-    - /api/fields/suggest?q=machine
-    """
-    query = request.args.get("q", "")
+    if not query:
+        return jsonify({"results": []})
 
-    if not query or len(query) < 2:
-        return (
-            jsonify(
-                {
-                    "error": "Please provide a query parameter 'q' with at least 2 characters"
-                }
-            ),
-            400,
-        )
+    # URL encode the query
+    encoded_query = quote(query)
 
-    # Build the OpenAlex API URL for concepts
-    api_url = f"{OPENALEX_API_BASE}/concepts"
-
-    # Set up query parameters for OpenAlex API
-    params = {"search": query, "per_page": 10}
-
-    # Add email for polite pool if configured
-    if os.environ.get("OPENALEX_EMAIL"):
-        params["email"] = os.environ.get("OPENALEX_EMAIL")
-
-    try:
-        # Make request to OpenAlex API
-        response = requests.get(api_url, params=params)
-        response.raise_for_status()
-
-        data = response.json()
-
-        suggestions = []
-        for concept in data.get("results", []):
-            suggestions.append(
-                {
-                    "id": concept.get("id"),
-                    "name": concept.get("display_name"),
-                    "level": concept.get("level"),
-                    "works_count": concept.get("works_count"),
-                    "wikidata": concept.get("wikidata"),
-                }
-            )
-
-            # Update our cache
-            concept_cache[concept.get("display_name").lower()] = {
-                "id": concept.get("id"),
-                "name": concept.get("display_name"),
-            }
-
-        return jsonify(
-            {"suggestions": suggestions, "query": query, "count": len(suggestions)}
-        )
-
-    except requests.exceptions.RequestException as e:
-        return (
-            jsonify({"error": f"Error fetching data from OpenAlex API: {str(e)}"}),
-            500,
-        )
-
-
-@app.route("/", methods=["GET"])
-def home():
-    """API documentation endpoint"""
-    docs = {
-        "name": "OpenAlex Research API",
-        "description": "API for searching research papers, articles, and datasets using OpenAlex",
-        "endpoints": [
-            {
-                "path": "/api/papers",
-                "method": "GET",
-                "description": "Search for research papers",
-                "parameters": [
-                    {
-                        "name": "fields",
-                        "type": "string",
-                        "description": "Comma-separated list of fields (e.g., math,physics,ai)",
-                    },
-                    {
-                        "name": "search",
-                        "type": "string",
-                        "description": "Global search query",
-                    },
-                ],
-                "example": "/api/papers?fields=math,physics",
-            },
-            {
-                "path": "/api/articles",
-                "method": "GET",
-                "description": "Search for articles",
-                "parameters": [
-                    {
-                        "name": "fields",
-                        "type": "string",
-                        "description": "Comma-separated list of fields (e.g., bio)",
-                    },
-                    {
-                        "name": "search",
-                        "type": "string",
-                        "description": "Global search query",
-                    },
-                ],
-                "example": "/api/articles?search=machine learning",
-            },
-            {
-                "path": "/api/datasets",
-                "method": "GET",
-                "description": "Search for datasets",
-                "parameters": [
-                    {
-                        "name": "fields",
-                        "type": "string",
-                        "description": "Comma-separated list of fields (e.g., ml,nlp)",
-                    },
-                    {
-                        "name": "search",
-                        "type": "string",
-                        "description": "Global search query",
-                    },
-                ],
-                "example": "/api/datasets?fields=ml,nlp",
-            },
-            {
-                "path": "/api/fields/suggest",
-                "method": "GET",
-                "description": "Get field/concept suggestions based on a query",
-                "parameters": [
-                    {
-                        "name": "q",
-                        "type": "string",
-                        "description": "Search query for field suggestions",
-                    }
-                ],
-                "example": "/api/fields/suggest?q=machine",
-            },
-        ],
+    # Use the autocomplete endpoint for concepts
+    params = {
+        "q": encoded_query,
+        "filter": "display_name.search:" + encoded_query,
+        "per-page": 5,
     }
 
-    return jsonify(docs)
+    result = make_openAlex_request("concepts", params)
+
+    # Clean and format the response
+    if "error" not in result:
+        return jsonify(clean_concepts_data(result))
+    return jsonify(result)
+
+
+# Health check endpoint with added debug info
+@app.route("/health", methods=["GET"])
+def health_check():
+    # Test CORE API
+    core_status = "unknown"
+    core_details = {}
+    try:
+        test_result = make_core_request(
+            "search/works", data={"query": "*", "page": 1, "pageSize": 1}
+        )
+        if "error" in test_result:
+            core_status = "error"
+            core_details = test_result
+        else:
+            core_status = "online"
+            core_details = {"totalHits": test_result.get("totalHits", 0)}
+    except Exception as e:
+        core_status = "error"
+        core_details = {"exception": str(e)}
+
+    # Test OpenAlex API
+    openalex_status = "unknown"
+    try:
+        test_result = make_openAlex_request("works", params={"page": 1, "per-page": 1})
+        if "error" in test_result:
+            openalex_status = "error"
+        else:
+            openalex_status = "online"
+    except Exception as e:
+        openalex_status = "error"
+
+    return jsonify(
+        {
+            "status": "healthy",
+            "service": "Research API (CORE + OpenAlex)",
+            "apis": {
+                "core": core_status,
+                "core_details": core_details,
+                "openalex": openalex_status,
+            },
+        }
+    )
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    debug = os.environ.get("FLASK_ENV") == "development"
-    app.run(host="0.0.0.0", port=port, debug=debug)
+    app.run(host="0.0.0.0", port=port, debug=True)
