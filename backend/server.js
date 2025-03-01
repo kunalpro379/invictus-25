@@ -7,6 +7,7 @@ require("dotenv").config({
 });
 
 const rootRouter = require("./routes/index");
+const networkingRoutes = require("./routes/networking.routes");
 
 if (!process.env.MONGODB_URI || !process.env.JWT_SECRET) {
   console.error("❌ Missing env vars");
@@ -28,6 +29,7 @@ app.use(
 );
 app.use(express.json());
 app.use("/api/v1", rootRouter);
+app.use("/api/network", networkingRoutes);
 
 // Serve static files if frontend exists
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
