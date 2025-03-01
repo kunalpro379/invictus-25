@@ -1,74 +1,107 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { motion } from "framer-motion";
 
 export function TestimonialSection() {
   const testimonials = [
     {
-      quote:
-        "This starter kit saved us hours of setup time. We were able to focus on building our core features right from the start.",
+      quote: "This starter kit is absolutely phenomenal! The code quality and components are top-notch. Saved us weeks of development time.",
       author: "Alex Johnson",
-      role: "Frontend Developer",
-      avatar: "AJ",
+      role: "Senior Developer at Google",
+      avatar: "https://randomuser.me/api/portraits/men/1.jpg",
+      company: "google.com",
     },
     {
-      quote: "The authentication components worked flawlessly. Clean code and great UX out of the box.",
+      quote: "The most beautiful and well-structured starter kit I've ever used. Perfect for hackathons and rapid prototyping.",
       author: "Sarah Chen",
-      role: "UX Designer",
-      avatar: "SC",
+      role: "Tech Lead at Microsoft",
+      avatar: "https://randomuser.me/api/portraits/women/2.jpg",
+      company: "microsoft.com",
     },
     {
-      quote: "We won our hackathon thanks to this starter kit. The modern UI components impressed the judges.",
+      quote: "Won first place in our hackathon using this! The modern UI components and animations really set our project apart.",
       author: "Michael Rodriguez",
-      role: "Full Stack Developer",
-      avatar: "MR",
+      role: "Founder at TechStart",
+      avatar: "https://randomuser.me/api/portraits/men/3.jpg",
+      company: "techstart.io",
     },
-  ]
+  ];
 
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-50">
-      <div className="container px-4 md:px-6 mx-auto">
-        <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          <div className="space-y-2">
-            <div className="inline-block rounded-lg bg-gray-100 px-3 py-1 text-sm">Testimonials</div>
-            <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">Loved by Developers</h2>
-            <p className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              Don't just take our word for it. Here's what others have to say about our starter kit.
-            </p>
-          </div>
-        </div>
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3 lg:gap-12 py-8">
+    <section className="relative py-20 overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800" />
+      <div className="absolute inset-0 bg-grid-gray-100/[0.2] bg-[size:20px_20px]" />
+      
+      <div className="container relative px-4 mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
+          <motion.span 
+            className="inline-block px-4 py-2 mb-4 text-sm font-semibold tracking-wider text-blue-600 uppercase bg-blue-100 rounded-full dark:bg-blue-900/30"
+            whileHover={{ scale: 1.05 }}
+          >
+            Testimonials
+          </motion.span>
+          <h2 className="mb-4 text-4xl font-bold text-gray-900 dark:text-white md:text-5xl">
+            Loved by Developers
+          </h2>
+          <p className="mx-auto text-xl text-gray-600 dark:text-gray-300 md:max-w-xl">
+            Join thousands of developers who are already building amazing projects with our starter kit
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {testimonials.map((testimonial, index) => (
-            <div key={index} className="flex flex-col items-center space-y-4 rounded-lg border p-6 shadow-sm bg-white">
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.2 }}
+              whileHover={{ y: -5 }}
+              className="relative p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-gray-800/50"
+            >
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 opacity-5 rounded-full blur-2xl" />
+              
               <div className="relative">
-                <svg
-                  className="absolute -top-6 -left-6 h-12 w-12 text-gray-200"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M10 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5" />
-                  <path d="M19 11h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h3a1 1 0 0 1 1 1v6c0 2.667 -1.333 4.333 -4 5" />
+                {/* Content inside the div */}
+              </div>
+                <svg className="w-10 h-10 mb-4 text-blue-500 opacity-20" fill="currentColor" viewBox="0 0 32 32">
+                  <path d="M16 0C7.16 0 0 7.16 0 16s7.16 16 16 16 16-7.16 16-16S24.84 0 16 0zm6.4 14.4h-3.2v3.2h3.2v3.2h-6.4v-9.6h6.4v3.2zm-9.6 0h-3.2v3.2h3.2v3.2H6.4v-9.6h6.4v3.2z"/>
                 </svg>
-                <p className="text-gray-500 italic relative z-10">{testimonial.quote}</p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Avatar>
-                  <AvatarImage src={`/placeholder.svg?height=40&width=40&text=${testimonial.avatar}`} />
-                  <AvatarFallback>{testimonial.avatar}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h4 className="font-semibold">{testimonial.author}</h4>
-                  <p className="text-sm text-gray-500">{testimonial.role}</p>
+                
+                <p className="mb-6 text-lg italic text-gray-700 dark:text-gray-300">
+                  "{testimonial.quote}"
+                </p>
+
+                <div className="flex items-center gap-4">
+                  <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
+                    <AvatarImage src={testimonial.avatar} />
+                    <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600">
+                      {testimonial.author.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white">
+                      {testimonial.author}
+                    </h4>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <span>{testimonial.role}</span>
+                      <span>•</span>
+                      <a href={`https://${testimonial.company}`} className="hover:text-blue-600">
+                        {testimonial.company}
+                      </a>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
     </section>
-  )
+  );
 }
-

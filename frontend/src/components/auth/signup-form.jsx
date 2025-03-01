@@ -1,13 +1,15 @@
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const signupSchema = z
   .object({
@@ -22,16 +24,19 @@ const signupSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
-  })
+  });
 
 export function SignupForm() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(signupSchema),
@@ -40,19 +45,34 @@ export function SignupForm() {
       email: "",
       password: "",
       confirmPassword: "",
-      terms: false,
+      terms: false, // Ensures the checkbox starts as unchecked
     },
-  })
+  });
 
-  function onSubmit(data) {
-    setIsLoading(true)
-    // Simulate API call
-    console.log("Signup data:", data)
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 1500)
-    // Handle signup logic here
-  }
+  const onSubmit = async (data) => {
+    setIsLoading(true);
+    try {
+      const nameParts = data.name.trim().split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+  
+      const res = await axios.post("http://localhost:3000/api/v1/users/signup", {
+        username: data.email,
+        firstName,
+        lastName,
+        password: data.password,
+      });
+  
+      localStorage.setItem("token", res.data.token);
+      navigate("/");
+    } catch (err) {
+      alert(err.response?.data?.message || "Signup failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -62,16 +82,21 @@ export function SignupForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Full Name */}
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
             <Input id="name" type="text" placeholder="John Doe" {...register("name")} />
             {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
           </div>
+
+          {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" placeholder="name@example.com" {...register("email")} />
             {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
           </div>
+
+          {/* Password */}
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
@@ -94,6 +119,8 @@ export function SignupForm() {
             </div>
             {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
           </div>
+
+          {/* Confirm Password */}
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
             <div className="relative">
@@ -116,8 +143,19 @@ export function SignupForm() {
             </div>
             {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>}
           </div>
+
+          {/* Terms and Conditions Checkbox */}
           <div className="flex items-center space-x-2">
-            <Checkbox id="terms" {...register("terms")} />
+          <Checkbox
+  id="terms"
+  checked={watch("terms")}
+  onCheckedChange={(val) => {
+    setValue("terms", val);
+    trigger("terms"); // ✅ Manually trigger validation
+  }}
+  {...register("terms")}
+/>
+
             <Label htmlFor="terms" className="text-sm font-normal">
               I agree to the{" "}
               <a href="/terms" className="text-primary hover:underline">
@@ -126,6 +164,8 @@ export function SignupForm() {
             </Label>
           </div>
           {errors.terms && <p className="text-sm text-red-500">{errors.terms.message}</p>}
+
+          {/* Submit Button */}
           <Button type="submit" className="w-full bg-black text-white hover:bg-black/40" disabled={isLoading}>
             {isLoading ? (
               <>
@@ -138,6 +178,7 @@ export function SignupForm() {
           </Button>
         </form>
       </CardContent>
+
       <CardFooter className="flex flex-col">
         <div className="relative my-3 w-full">
           <div className="absolute inset-0 flex items-center">
@@ -152,6 +193,5 @@ export function SignupForm() {
         </p>
       </CardFooter>
     </Card>
-  )
+  );
 }
-

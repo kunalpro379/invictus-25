@@ -1,23 +1,26 @@
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import axios from "axios"; // Import axios
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useNavigate } from "react-router-dom"; // Ensure correct navigation
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(8, { message: "Password must be at least 8 characters" }),
   rememberMe: z.boolean().optional(),
-})
+});
 
 export function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -30,17 +33,24 @@ export function LoginForm() {
       password: "",
       rememberMe: false,
     },
-  })
+  });
 
-  function onSubmit(data) {
-    setIsLoading(true)
-    // Simulate API call
-    console.log("Login data:", data)
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 1500)
-    // Handle login logic here
-  }
+  const onSubmit = async (data) => {
+    setIsLoading(true);
+    try {
+      const res = await axios.post("http://localhost:3000/api/v1/users/signin", {
+        username: data.email, // Change "email" to "username"
+        password: data.password,
+      });
+      localStorage.setItem("token", res.data.token);
+      navigate("/");
+    } catch (err) {
+      alert(err.response?.data?.message || "Sign-in failed");
+    } finally {
+      setIsLoading(false);
+    }
+};
+
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -101,11 +111,6 @@ export function LoginForm() {
         </form>
       </CardContent>
       <CardFooter className="flex flex-col">
-        <div className="relative my-3 w-full">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-        </div>
         <p className="mt-4 text-center text-sm text-gray-600">
           Don't have an account?{" "}
           <a href="/signup" className="font-medium text-primary hover:underline">
@@ -114,6 +119,5 @@ export function LoginForm() {
         </p>
       </CardFooter>
     </Card>
-  )
+  );
 }
-
