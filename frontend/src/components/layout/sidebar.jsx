@@ -10,43 +10,55 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="w-64 h-screen bg-gray-800 text-white fixed flex flex-col justify-between">
+    <div className="w-64 h-screen bg-white text-gray-800 shadow-lg fixed flex flex-col justify-between border-r border-gray-200">
       <div>
-        <div className="p-4">
-          <h1 className="text-2xl font-bold">Invictus</h1>
+        <div className="p-4 border-b border-gray-200">
+          <h1 className="text-2xl font-bold text-black">ReSync</h1>
         </div>
-        <nav className="mt-10">
+        <nav className="mt-4">
           <NavLink
             to="/research-papers"
-            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
-            activeClassName="bg-gray-700"
+            className={({ isActive }) =>
+              `block py-2.5 px-4 rounded transition duration-200 ${
+                isActive ? "bg-black/30 text-blue-600 text-gray-700" : "hover:bg-black/10 text-black"
+              }`
+            }
           >
             Research Papers
           </NavLink>
           <NavLink
             to="/datasets"
-            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
-            activeClassName="bg-gray-700"
+            className={({ isActive }) =>
+              `block py-2.5 px-4 rounded transition duration-200 ${
+                isActive ? "bg-black/30 text-blue-600 text-gray-700" : "hover:bg-black/10 text-black"
+              }`
+            }
           >
             Datasets
           </NavLink>
           <NavLink
             to="/articles"
-            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
-            activeClassName="bg-gray-700"
+            className={({ isActive }) =>
+              `block py-2.5 px-4 rounded transition duration-200 ${
+                isActive ? "bg-black/30 text-blue-600 text-gray-700" : "hover:bg-black/10 text-black"
+              }`
+            }
           >
             Articles
           </NavLink>
           <NavLink
             to="/profile"
-            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
-            activeClassName="bg-gray-700"
+            className={({ isActive }) =>
+              `block py-2.5 px-4 rounded transition duration-200 ${
+                isActive ? "bg-black/30 text-blue-600 text-gray-700" : "hover:bg-black/10 text-black"
+              }`
+            }
           >
             Profile
           </NavLink>
         </nav>
       </div>
-      <div className="p-4">
+      <div className="p-4 border-t border-gray-200">
         <button
           onClick={handleLogout}
           className="w-full py-2.5 px-4 rounded transition duration-200 bg-red-500 hover:bg-red-600 text-white"
