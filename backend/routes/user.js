@@ -8,6 +8,9 @@ const { generateToken } = require("../config");
 
 const signupBody = zod.object({
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6c7c2fed8477ddfc433d936ceeb33bdb834de3e1
     username: zod.string().email(),
     firstName: zod.string(),
     lastName: zod.string(),
@@ -21,12 +24,15 @@ const signupBody = zod.object({
             url: zod.string().url(),
         })
     ),
+<<<<<<< HEAD
 =======
   username: zod.string().email(),
   firstName: zod.string(),
   lastName: zod.string().optional(),
   password: zod.string().min(6),
 >>>>>>> f7df7af9243f9eeac6a1ce17b9c51d46eb60f349
+=======
+>>>>>>> 6c7c2fed8477ddfc433d936ceeb33bdb834de3e1
 });
 
 router.post("/signup", async (req, res) => {
