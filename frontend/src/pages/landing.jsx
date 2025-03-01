@@ -29,7 +29,7 @@ export default function LandingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
-      <header className={`bg-blue-950 fixed w-full z-50 transition-all duration-300 ${scrolled ? "bg-white/80 shadow-lg" : "bg-transparent"}`}>
+      <header className="bg-blue-950 fixed w-full z-50 transition-all duration-300">
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
           <motion.div whileHover={{ scale: 1.05 }}>
             <Link to="/" className="flex items-center space-x-3">
@@ -40,7 +40,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <span className="text-xl font-bold transition-colors duration-300 text-white" >
-                ResearchSync
+                ReSync
               </span>
             </Link>
           </motion.div>
