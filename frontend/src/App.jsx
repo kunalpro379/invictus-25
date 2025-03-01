@@ -6,6 +6,7 @@ import ResearchPapers from "./pages/research-papers";
 import PaperDetails from "./pages/paper-details";
 import Datasets from "./pages/datasets";
 import DatasetUpload from "./pages/dataset-upload";
+import DatasetDetail from "./pages/DatasetDetail";
 
 const router = createBrowserRouter([
   {
@@ -38,7 +39,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/dataset/:id",
-    element: <DatasetUpload />,
+    element: <DatasetDetail />,
   },
 ]);
 
