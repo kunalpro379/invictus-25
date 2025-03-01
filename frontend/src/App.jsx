@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import LoginPage from "./pages/login";
 import SignupPage from "./pages/signup";
 import LandingPage from "./pages/landing";
@@ -13,7 +13,6 @@ import ProfileForm from "./pages/ProfileForm";
 
 
 const router = createBrowserRouter([
-  // Public Routes
   {
     path: "/",
     element: <LandingPage />,
@@ -26,46 +25,25 @@ const router = createBrowserRouter([
     path: "/signup",
     element: <SignupPage />,
   },
-
-  // Authenticated Routes wrapped in AuthenticatedLayout
   {
-    element: <AuthenticatedLayout />,
-    children: [
-      {
-        path: "/research-papers",
-        element: <ResearchPapers />,
-      },
-      {
-        path: "/research-papers/:id",
-        element: <PaperDetails />,
-      },
-      {
-        path: "/datasets",
-        element: <Datasets />,
-      },
-      {
-        path: "/dataset-upload",
-        element: <DatasetUpload />,
-      },
-      {
-        path: "/dataset/:id",
-        element: <DatasetDetail />,
-      },
-      {
-        path: "/profile",
-        element: <ProfileForm />,
-      },
-      {
-        path: "/articles",
-        element: <Articles />,
-      },
-    ],
+    path: "/research-papers",
+    element: <ResearchPapers />,
   },
-
-  // Redirect unmatched routes
   {
-    path: "*",
-    element: <Navigate to="/" />,
+    path: "/research-papers/:id",
+    element: <PaperDetails />,
+  },
+  {
+    path: "/datasets",
+    element: <Datasets />,
+  },
+  {
+    path: "/dataset-upload",
+    element: <DatasetUpload />,
+  },
+  {
+    path: "/dataset/:id",
+    element: <DatasetDetail />,
   },
 ]);
 

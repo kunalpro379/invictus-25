@@ -39,7 +39,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Sample user data - in a real app, this would come from authentication
 const currentUser = {
   id: "user123",
   name: "Jane Researcher",
@@ -55,96 +54,225 @@ const Datasets = () => {
   const [datasets, setDatasets] = useState([]);
   const [userDatasets, setUserDatasets] = useState([]);
   const [allTags, setAllTags] = useState([]);
+  const [totalResults, setTotalResults] = useState(0);
   
   const itemsPerPage = 20;
 
-  // Fetch OpenAlex data (simulated)
-  useEffect(() => {
-    const fetchOpenAlexData = async () => {
-      setIsLoading(true);
-      try {
-        // In a real implementation, you would fetch from OpenAlex API
-        // Example: const response = await fetch('https://api.openalex.org/works');
-        
-        // Simulating API call with timeout
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Generate sample OpenAlex-like data
-        const openAlexData = Array.from({ length: 50 }, (_, i) => ({
-          id: `oalex-${i + 1}`,
-          title: `OpenAlex Research Dataset ${i + 1}`,
-          description: `This is a comprehensive dataset about ${['genomics', 'climate science', 'neuroscience', 'machine learning', 'sustainable energy'][i % 5]} containing valuable research information.`,
-          tags: [
-            ['genomics', 'biology', 'dna'][i % 3],
-            ['research', 'academic', 'published'][i % 3],
-            ['open-access', 'peer-reviewed', 'cited'][i % 3]
-          ],
-          files: Array.from({ length: Math.floor(Math.random() * 10) + 1 }, (_, j) => ({
-            id: `file-${i}-${j}`,
-            name: `dataset-${i}-${j}.csv`,
-            size: Math.floor(Math.random() * 1000000),
-            type: ['CSV', 'JSON', 'XML', 'XLSX'][Math.floor(Math.random() * 4)]
-          })),
-          created_at: new Date(2023, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString(),
-          source: 'OpenAlex',
-          citations: Math.floor(Math.random() * 1000),
-          author: [`Dr. ${['Smith', 'Johnson', 'Williams', 'Brown', 'Jones'][i % 5]}`, `Prof. ${['Lee', 'Garcia', 'Miller', 'Davis', 'Rodriguez'][i % 5]}`][i % 2],
-          institution: [`University of ${['Cambridge', 'Oxford', 'Stanford', 'MIT', 'Harvard'][i % 5]}`, `${['National', 'International', 'Global', 'Regional', 'Advanced'][i % 5]} Research Institute`][i % 2]
-        }));
-        
-        // Generate sample user datasets
-        const userDatasetsSample = Array.from({ length: 8 }, (_, i) => ({
-          id: `user-${i + 1}`,
-          title: `My Research Project ${i + 1}`,
-          description: `Personal dataset for my research on ${['neural networks', 'human behavior', 'molecular structures', 'environmental impacts', 'economic patterns'][i % 5]}.`,
-          tags: [
-            ['personal', 'private', 'collaborative'][i % 3],
-            ['experiment', 'analysis', 'survey'][i % 3],
-            ['draft', 'complete', 'in-progress'][i % 3]
-          ],
-          files: Array.from({ length: Math.floor(Math.random() * 5) + 1 }, (_, j) => ({
-            id: `user-file-${i}-${j}`,
-            name: `my-data-${i}-${j}.${['csv', 'json', 'xlsx', 'txt'][j % 4]}`,
-            size: Math.floor(Math.random() * 500000),
-            type: ['CSV', 'JSON', 'XLSX', 'TXT'][j % 4]
-          })),
-          created_at: new Date(2024, Math.floor(Math.random() * 3), Math.floor(Math.random() * 28) + 1).toISOString(),
-          source: 'User Upload',
-          author: currentUser.name,
-          isUserOwned: true
-        }));
-        
-        // Combine all datasets
-        setDatasets(openAlexData);
-        setUserDatasets(userDatasetsSample);
-        
-        // Extract all unique tags
-        const tags = new Set([
-          ...openAlexData.flatMap(dataset => dataset.tags),
-          ...userDatasetsSample.flatMap(dataset => dataset.tags)
-        ]);
-        setAllTags([...tags]);
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setIsLoading(false);
+  // Function to fetch data from OpenAlex API
+  const fetchOpenAlexData = async (page = 1, query = "") => {
+    setIsLoading(true);
+    try {
+      // Construct the OpenAlex API URL with pagination and filters
+      let url = `https://api.openalex.org/works?per_page=${itemsPerPage}&page=${page}&search=dataset`;
+      
+      // Add search query if provided
+      if (query) {
+        url += `&search=${encodeURIComponent(query)}`;
       }
-    };
+      
+      // Add selected concepts/tags as filters if any
+      if (selectedTags.length > 0) {
+        const conceptsQuery = selectedTags.map(tag => `concept.display_name:${encodeURIComponent(tag)}`).join(" OR ");
+        url += `&filter=${encodeURIComponent(conceptsQuery)}`;
+      }
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`OpenAlex API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Transform OpenAlex data to match our component's expected format
+      const formattedData = data.results.map(work => ({
+        id: `oalex-${work.id.split('/').pop()}`, // Extract just the ID part
+        title: work.title || "Untitled Research",
+        description: work.abstract || "No abstract available.",
+        tags: extractConcepts(work),
+        files: extractFiles(work),
+        created_at: work.publication_date || new Date().toISOString(),
+        source: "OpenAlex",
+        citations: work.cited_by_count || 0,
+        author: extractAuthors(work),
+        institution: extractInstitutions(work),
+        doi: work.doi,
+        url: work.open_access?.oa_url || work.primary_location?.landing_page_url
+      }));
+      
+      setDatasets(formattedData);
+      setTotalResults(data.meta?.count || formattedData.length);
+      
+      // Extract all unique concepts/topics to use as tags
+      const tags = new Set(formattedData.flatMap(dataset => dataset.tags));
+      if (tags.size > 0) {
+        setAllTags([...tags]);
+      }
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching OpenAlex data:", error);
+      setIsLoading(false);
+    }
+  };
+
+  // Helper to extract concepts as tags
+  const extractConcepts = (work) => {
+    if (!work.concepts || work.concepts.length === 0) {
+      return ["research"];
+    }
     
+    // Extract top concepts (limit to prevent too many tags)
+    return work.concepts
+      .slice(0, 3)
+      .map(concept => concept.display_name)
+      .filter(Boolean);
+  };
+  
+  // Helper to extract files information
+  const extractFiles = (work) => {
+    const files = [];
+    
+    // Add primary PDF if available
+    if (work.open_access?.oa_url) {
+      files.push({
+        id: `file-pdf-${work.id}`,
+        name: "Full Text PDF",
+        type: "PDF",
+        url: work.open_access.oa_url
+      });
+    }
+    
+    // Add datasets if available
+    if (work.referenced_works && work.referenced_works.length > 0) {
+      files.push({
+        id: `file-ref-${work.id}`,
+        name: "Referenced Works",
+        type: "REF",
+        count: work.referenced_works.length
+      });
+    }
+    
+    // If no files found, add a placeholder
+    if (files.length === 0) {
+      files.push({
+        id: `file-meta-${work.id}`,
+        name: "Metadata Only",
+        type: "META"
+      });
+    }
+    
+    return files;
+  };
+  
+  // Helper to extract authors information
+  const extractAuthors = (work) => {
+    if (!work.authorships || work.authorships.length === 0) {
+      return "Unknown Author";
+    }
+    
+    // Get first author
+    const firstAuthor = work.authorships[0];
+    
+    if (work.authorships.length === 1) {
+      return firstAuthor.author?.display_name || "Unknown Author";
+    }
+    
+    // First author + et al. if multiple authors
+    return `${firstAuthor.author?.display_name || "Unknown"} et al.`;
+  };
+  
+  // Helper to extract institutions
+  const extractInstitutions = (work) => {
+    if (!work.authorships || work.authorships.length === 0) {
+      return "";
+    }
+    
+    // Try to get institution from first author
+    const firstAuthor = work.authorships[0];
+    if (firstAuthor.institutions && firstAuthor.institutions.length > 0) {
+      return firstAuthor.institutions[0].display_name || "";
+    }
+    
+    return "";
+  };
+  
+  // Fetch user datasets (simulated - would connect to your backend in real implementation)
+  const fetchUserDatasets = async () => {
+    try {
+      // Simulate API call with timeout
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Generate sample user datasets (in a real implementation, this would be an API call to your backend)
+      const userDatasetsSample = Array.from({ length: 8 }, (_, i) => ({
+        id: `user-${i + 1}`,
+        title: `My Research Project ${i + 1}`,
+        description: `Personal dataset for my research on ${['neural networks', 'human behavior', 'molecular structures', 'environmental impacts', 'economic patterns'][i % 5]}.`,
+        tags: [
+          ['personal', 'private', 'collaborative'][i % 3],
+          ['experiment', 'analysis', 'survey'][i % 3],
+          ['draft', 'complete', 'in-progress'][i % 3]
+        ],
+        files: Array.from({ length: Math.floor(Math.random() * 5) + 1 }, (_, j) => ({
+          id: `user-file-${i}-${j}`,
+          name: `my-data-${i}-${j}.${['csv', 'json', 'xlsx', 'txt'][j % 4]}`,
+          size: Math.floor(Math.random() * 500000),
+          type: ['CSV', 'JSON', 'XLSX', 'TXT'][j % 4]
+        })),
+        created_at: new Date(2024, Math.floor(Math.random() * 3), Math.floor(Math.random() * 28) + 1).toISOString(),
+        source: 'User Upload',
+        author: currentUser.name,
+        isUserOwned: true
+      }));
+      
+      setUserDatasets(userDatasetsSample);
+      
+      // Add user tags to all tags
+      const userTags = new Set(userDatasetsSample.flatMap(dataset => dataset.tags));
+      setAllTags(prevTags => [...new Set([...prevTags, ...userTags])]);
+      
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+
+  // Initial data fetch
+  useEffect(() => {
     fetchOpenAlexData();
+    fetchUserDatasets();
   }, []);
+  
+  // Refetch when search, tags, or pagination changes
+  useEffect(() => {
+    if (activeTab !== "user") {
+      fetchOpenAlexData(currentPage, searchQuery);
+    }
+  }, [currentPage, searchQuery, selectedTags, activeTab]);
 
   // Filter datasets based on search query and selected tags
   const getFilteredDatasets = () => {
-    const dataToFilter = activeTab === "all" 
-      ? [...datasets, ...userDatasets]
-      : activeTab === "user" 
-        ? userDatasets 
-        : datasets;
+    // If on OpenAlex tab, we're already filtering via API
+    if (activeTab === "openalex") {
+      return datasets;
+    }
     
-    return dataToFilter.filter((dataset) => {
+    // If on User tab, we need to filter locally
+    if (activeTab === "user") {
+      return userDatasets.filter((dataset) => {
+        const matchesSearch =
+          !searchQuery ||
+          dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          dataset.description.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesTags =
+          selectedTags.length === 0 ||
+          selectedTags.every((tag) => dataset.tags.includes(tag));
+        return matchesSearch && matchesTags;
+      });
+    }
+    
+    // If on All tab, combine both sources (OpenAlex already filtered via API)
+    const filteredUserDatasets = userDatasets.filter((dataset) => {
       const matchesSearch =
+        !searchQuery ||
         dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         dataset.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesTags =
@@ -152,6 +280,8 @@ const Datasets = () => {
         selectedTags.every((tag) => dataset.tags.includes(tag));
       return matchesSearch && matchesTags;
     });
+    
+    return [...datasets, ...filteredUserDatasets];
   };
 
   const filteredDatasets = getFilteredDatasets();
@@ -159,8 +289,8 @@ const Datasets = () => {
   // Pagination logic
   const totalPages = Math.ceil(filteredDatasets.length / itemsPerPage);
   const currentDatasets = filteredDatasets.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    0,
+    itemsPerPage
   );
 
   const toggleTag = (tag) => {
@@ -191,11 +321,7 @@ const Datasets = () => {
   };
 
   const getCardLink = (dataset) => {
-    // Only show edit link if dataset is user-owned AND we're in the "user" tab
-    if (dataset.isUserOwned && activeTab === "user") {
-      return `/dataset-upload?edit=${dataset.id}`;
-    }
-    // Otherwise show detailed view
+    // Always show detailed view first
     return `/dataset/${dataset.id}`;
   };
 
@@ -243,7 +369,7 @@ const Datasets = () => {
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center mr-2">
                 <Filter className="h-4 w-4 text-gray-500 mr-1" />
-                <span className="text-sm font-medium text-gray-600">Filter by tags:</span>
+                <span className="text-sm font-medium text-gray-600">Filter by concepts:</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {allTags.slice(0, 15).map((tag) => (
@@ -264,7 +390,7 @@ const Datasets = () => {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Badge variant="outline" className="cursor-pointer hover:bg-blue-50">
-                        +{allTags.length - 15} more tags
+                        +{allTags.length - 15} more concepts
                       </Badge>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56 p-2 max-h-64 overflow-y-auto">
@@ -307,7 +433,8 @@ const Datasets = () => {
               value="all" 
               className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm"
             >
-              All Datasets
+              <Database className="h-4 w-4 mr-1.5" />
+              OpenAlex
             </TabsTrigger>
             <TabsTrigger 
               value="user" 
@@ -320,9 +447,17 @@ const Datasets = () => {
 
           <TabsContent value="all" className="mt-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">All Research Datasets</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <Database className="h-5 w-5 mr-2 text-blue-600" />
+                  OpenAlex Datasets
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Data from OpenAlex, a free and open index of scholarly research
+                </p>
+              </div>
               <span className="text-sm text-gray-500">
-                Showing {filteredDatasets.length} results
+                Showing {filteredDatasets.length} of {totalResults} results
               </span>
             </div>
           </TabsContent>
@@ -371,7 +506,7 @@ const Datasets = () => {
           </div>
         ) : (
           <>
-            {/* Modified Dataset Cards */}
+            {/* Dataset Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               <AnimatePresence>
                 {currentDatasets.length > 0 ? (
@@ -388,6 +523,7 @@ const Datasets = () => {
                       <Link 
                         to={getCardLink(dataset)}
                         className="block h-full"
+                        target={!dataset.isUserOwned ? "_blank" : "_self"}
                       >
                         <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow duration-300 border-gray-200 bg-white">
                           <CardHeader className={`pb-2 ${dataset.isUserOwned ? "bg-blue-50" : ""}`}>
@@ -395,16 +531,20 @@ const Datasets = () => {
                               <CardTitle className="text-xl font-semibold text-gray-900 line-clamp-2">
                                 {dataset.title}
                               </CardTitle>
-                              {dataset.isUserOwned && (
+                              {dataset.isUserOwned ? (
                                 <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
                                   Your Upload
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                                  OpenAlex
                                 </Badge>
                               )}
                             </div>
                             <CardDescription className="text-sm text-gray-500 flex items-center gap-1">
                               <Database className="h-3 w-3" />
                               {dataset.source || "Research Dataset"}
-                              {dataset.citations && ` • ${dataset.citations} citations`}
+                              {dataset.citations > 0 && ` • ${dataset.citations} citations`}
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="pt-4">
@@ -438,6 +578,9 @@ const Datasets = () => {
                               <div className="flex items-center">
                                 <FileType className="h-3.5 w-3.5 mr-1" />
                                 <span>{dataset.files.length} {dataset.files.length === 1 ? 'file' : 'files'}</span>
+                                {dataset.doi && (
+                                  <span className="ml-2">• DOI: {dataset.doi}</span>
+                                )}
                               </div>
                               <div className="flex items-center">
                                 <Calendar className="h-3.5 w-3.5 mr-1" />
@@ -533,6 +676,8 @@ const Datasets = () => {
             )}
           </>
         )}
+        
+
       </div>
     </div>
   );
