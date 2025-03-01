@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/button";
 import heroSectionBg from "../../assets/hero-section-bg.jpg"; // Adjust path as needed
 import { motion } from "framer-motion";
 import { Zap } from "lucide-react"; // Adding an icon for the badge
+import { useNavigate } from "react-router-dom";
 
 export function HeroSection() {
+  const navigate = useNavigate();
+
   return (
     <section
       className="relative w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-cover bg-center overflow-hidden"
@@ -20,6 +23,9 @@ export function HeroSection() {
             transition={{ duration: 0.8 }}
             className="space-y-4"
           >
+            <h1 className="p-4 text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl/none bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+              Welcome to ReSync
+            </h1>
             <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
@@ -29,9 +35,6 @@ export function HeroSection() {
               <Zap className="inline-block h-4 w-4 mr-2" />
               ReSync
             </motion.div>
-            <h1 className="p-4 text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl/none bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-              Welcome to ReSync
-            </h1>
             <p className="mx-auto max-w-lg text-lg leading-relaxed text-gray-100 md:text-xl">
               Unite fragmented research with a centralized platform for discovering articles, datasets, and experts.
               Enhance collaboration with AI-driven insights and real-time tools.
@@ -44,6 +47,7 @@ export function HeroSection() {
             className="space-x-6"
           >
             <Button
+              onClick={() => navigate("/signup")}
               size="lg"
               className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 rounded-lg shadow-md transition-all duration-300"
             >

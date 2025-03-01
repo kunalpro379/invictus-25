@@ -20,10 +20,21 @@ export default function LandingPage() {
   }, []);
 
   const navItems = [
-    'Features',
-    'Testimonials',
-    'Pricing'
+    { label: "Features", id: "features" },
+    { label: "Testimonials", id: "testimonials" },
+    { label: "Contact Us", id: "contact" }
   ];
+
+  // Smooth scroll function
+  const scrollToSection = (id) => {
+    const section = document.getElementById(id);
+    if (section) {
+      window.scrollTo({
+        top: section.offsetTop - 80, // Adjusted for fixed navbar height
+        behavior: "smooth"
+      });
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -37,7 +48,7 @@ export default function LandingPage() {
                   <span className="text-2xl font-bold text-white">R</span>
                 </div>
               </div>
-              <span className="text-xl font-bold transition-colors duration-300 text-white" >
+              <span className="text-xl font-bold transition-colors duration-300 text-white">
                 ReSync
               </span>
             </Link>
@@ -46,18 +57,18 @@ export default function LandingPage() {
           <nav className="hidden md:flex items-center space-x-8">
             {navItems.map((item) => (
               <motion.div
-                key={item}
+                key={item.id}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                {
-                  <a
-                    href={`#${item.toLowerCase()}`}
-                    className={`text-sm font-medium transition-colors duration-300 ${scrolled ? "text-gray-400 hover:text-blue-400" : "text-white/90 hover:text-white"}`}
-                  >
-                    {item}
-                  </a>
-                }
+                <button
+                  onClick={() => scrollToSection(item.id)}
+                  className={`text-sm font-medium transition-colors duration-300 ${
+                    scrolled ? "text-gray-400 hover:text-blue-400" : "text-white/90 hover:text-white"
+                  }`}
+                >
+                  {item.label}
+                </button>
               </motion.div>
             ))}
           </nav>
@@ -67,7 +78,9 @@ export default function LandingPage() {
               <Link to="/login">
                 <Button
                   variant="outline"
-                  className={`border-2 transition-colors duration-300 ${scrolled ? "border-gray-300 text-gray-100 hover:bg-gray-100" : "border-white text-white hover:bg-white/10"}`}
+                  className={`border-2 transition-colors duration-300 ${
+                    scrolled ? "border-gray-300 text-gray-100 hover:bg-gray-100" : "border-white text-white hover:bg-white/10"
+                  }`}
                 >
                   Login
                 </Button>
@@ -87,15 +100,20 @@ export default function LandingPage() {
 
       <main className="flex-1 pt-20">
         <HeroSection />
-        <div className="relative">
+        <div className="relative" id="features">
           <div className="absolute inset-0 bg-gradient-to-b from-white to-gray-50 -skew-y-3 -z-10 transform" />
           <FeatureSection />
         </div>
-        <TestimonialSection />
-        <CTASection />
+        <div id="testimonials">
+          <TestimonialSection />
+        </div>
+        <div id="pricing">
+          <CTASection />
+        </div>
+        <div id="contact">
+          <Footer />
+        </div>
       </main>
-
-      <Footer />
     </div>
   );
 }
