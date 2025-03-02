@@ -125,7 +125,17 @@ export default function UpdateProfile() {
       setIsLoading(false);
     }
   };
-
+  const fetchUserData = async (token) => {
+    try {
+      const res = await axios.get("http://localhost:3000/api/v1/users/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.user;
+    } catch (err) {
+      console.error("Error fetching user data:", err.response?.data || err.message);
+      return null;
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4">
       <Card className="w-full max-w-2xl shadow-xl rounded-lg bg-white border border-gray-300">

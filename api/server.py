@@ -162,7 +162,7 @@ def get_response(session_id, user_input):
 
     try:
         completion = client.chat.completions.create(
-            model="deepseek-r1-chat",  # Using the Deepseek model via Groq
+            model="mixtral-8x7b-32768",  
             messages=conversation_history[session_id],
             temperature=0.7,
             max_tokens=1024,

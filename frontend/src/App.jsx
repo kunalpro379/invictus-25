@@ -14,6 +14,7 @@ import ProfileForm from "./pages/ProfileForm";
 import UpdateProfile from "./pages/update-profile";
 import News from "./pages/news";
 import Connections from "./pages/connections";
+import Messages from "./pages/messages";
 
 
 const router = createBrowserRouter([
@@ -78,11 +79,23 @@ const router = createBrowserRouter([
       },
       {
         path: "/update-profile",
-        element: <ProfileForm />,
+        element: <UpdateProfile />,
       },
       {
         path: "/articles",
         element: <Articles />,
+      },
+      {
+        path: "/news",
+        element: <News />,
+      },
+      {
+        path: "/connections",
+        element: <Connections />,
+      },
+      { 
+        path: "/messages", 
+        element: <Messages /> 
       },
     ],
   },

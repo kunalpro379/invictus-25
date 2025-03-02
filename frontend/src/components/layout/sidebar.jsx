@@ -1,12 +1,16 @@
+// components/Sidebar.jsx
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
-const Sidebar = () => {
+const Sidebar = ({ user }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+    if (typeof window !== "undefined" && localStorage.getItem("token")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user"); // Clear user data on logout
+      navigate("/login");
+    }
   };
 
   return (
@@ -14,6 +18,11 @@ const Sidebar = () => {
       <div>
         <div className="p-4 border-b border-gray-200">
           <h1 className="text-2xl font-bold text-black">ReSync</h1>
+          {user && (
+            <p className="text-sm text-gray-600 mt-2">
+              Hi, {user.firstName} {user.lastName}
+            </p>
+          )}
         </div>
         <nav className="mt-4">
           <NavLink
@@ -36,7 +45,7 @@ const Sidebar = () => {
           >
             Datasets
           </NavLink>
-          <NavLink
+          {/* <NavLink
             to="/articles"
             className={({ isActive }) =>
               `block py-2.5 px-4 rounded transition duration-200 ${
@@ -45,7 +54,7 @@ const Sidebar = () => {
             }
           >
             Articles
-          </NavLink>
+          </NavLink> */}
           <NavLink
             to="/connections"
             className={({ isActive }) =>
@@ -55,6 +64,16 @@ const Sidebar = () => {
             }
           >
             Connect
+          </NavLink>
+          <NavLink
+            to="/messages"
+            className={({ isActive }) =>
+              `block py-2.5 px-4 rounded transition duration-200 ${
+                isActive ? "bg-black/30 text-blue-600 text-gray-700" : "hover:bg-black/10 text-black"
+              }`
+            }
+          >
+            Messages
           </NavLink>
           <NavLink
             to="/news"
