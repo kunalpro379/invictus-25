@@ -15,7 +15,11 @@ import {
   Trash2,
   Download,
   Maximize2, 
-  Minimize2
+  Minimize2,
+  Upload,
+  Info,
+  Clock,
+  Search
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import FileUpload from './FileUpload';
@@ -33,6 +37,8 @@ const AiAssistant = () => {
   const [pastConversations, setPastConversations] = useState([]);
   const [currentConversationId, setCurrentConversationId] = useState(sessionId);
   const inputRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [recentUploads, setRecentUploads] = useState([]);
 
   // Initialize session
   useEffect(() => {
@@ -52,6 +58,13 @@ const AiAssistant = () => {
         }))
         .sort((a, b) => b.lastMessage - a.lastMessage);
       setPastConversations(conversations);
+
+      // Set mock recent uploads for demo
+      setRecentUploads([
+        { id: 'rec1', name: 'Research on Climate Change.pdf', date: '2025-02-28' },
+        { id: 'rec2', name: 'Machine Learning Survey.pdf', date: '2025-02-25' },
+        { id: 'rec3', name: 'Neural Networks Paper.pdf', date: '2025-02-20' },
+      ]);
     };
     loadPastConversations();
   }, [messages]);
@@ -254,6 +267,11 @@ const AiAssistant = () => {
     }
   }, [isOpen]);
 
+  // Filter files based on search term
+  const filteredFiles = files.filter(file => 
+    file.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="fixed bottom-8 right-8 z-50">
       <AnimatePresence>
@@ -269,48 +287,48 @@ const AiAssistant = () => {
             } bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-200/50 flex flex-col overflow-hidden`}
           >
             {/* Header */}
-            <div className="p-4 md:p-6 border-b flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-2xl">
+            <div className="p-4 border-b flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-2xl">
               <div className="flex items-center gap-3">
-                <div className="p-2 md:p-3 bg-white/20 rounded-xl">
-                  <Bot className="h-5 w-5 md:h-6 md:w-6" />
+                <div className="p-2 bg-white/20 rounded-xl">
+                  <Bot className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg md:text-xl font-semibold tracking-tight">AI Research Assistant</h3>
-                  <p className="text-xs md:text-sm text-blue-100 font-medium">Always here to help</p>
+                  <h3 className="text-lg font-semibold tracking-tight">AI Research Assistant</h3>
+                  <p className="text-xs text-blue-100 font-medium">Always here to help</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 md:gap-3">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="hover:bg-white/20 text-white h-8 w-8 md:h-10 md:w-10"
+                  className="hover:bg-white/20 text-white h-8 w-8"
                 >
                   {isExpanded ? 
-                    <Minimize2 className="h-4 w-4 md:h-5 md:w-5" /> : 
-                    <Maximize2 className="h-4 w-4 md:h-5 md:w-5" />
+                    <Minimize2 className="h-4 w-4" /> : 
+                    <Maximize2 className="h-4 w-4" />
                   }
                 </Button>
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   onClick={() => setIsOpen(false)}
-                  className="hover:bg-white/20 text-white h-8 w-8 md:h-10 md:w-10"
+                  className="hover:bg-white/20 text-white h-8 w-8"
                 >
-                  <X className="h-4 w-4 md:h-5 md:w-5" />
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            <div className="flex-1 overflow-hidden bg-red">
-              <Tabs defaultValue="chat" className="h-full flex flex-col bg-red">
-                <TabsList className="flex-shrink-0 px-3 md:px-4 py-2 border-b bg-white">
-                  <TabsTrigger value="chat" className="flex gap-1 md:gap-2 items-center text-xs md:text-sm data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
-                    <MessageSquare className="h-3 w-3 md:h-4 md:w-4" />
+            <div className="flex-1 overflow-hidden">
+              <Tabs defaultValue="chat" className="h-full flex flex-col">
+                <TabsList className="flex-shrink-0 px-3 py-2 border-b bg-white grid grid-cols-2">
+                  <TabsTrigger value="chat" className="flex gap-1 items-center text-xs data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
+                    <MessageSquare className="h-3 w-3" />
                     Chat
                   </TabsTrigger>
-                  <TabsTrigger value="files" className="flex gap-1 md:gap-2 items-center text-xs md:text-sm data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
-                    <FileText className="h-3 w-3 md:h-4 md:w-4" />
+                  <TabsTrigger value="files" className="flex gap-1 items-center text-xs data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
+                    <FileText className="h-3 w-3" />
                     Files ({files.length})
                   </TabsTrigger>
                 </TabsList>
@@ -319,13 +337,13 @@ const AiAssistant = () => {
                   <div className="flex-1 overflow-y-auto">
                     <div className="p-4 space-y-6 max-w-4xl mx-auto pb-4"> 
                       {messages.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-center p-6 my-12">
-                          <div className="bg-blue-100/50 rounded-full p-6 mb-6">
-                            <Bot className="h-20 w-20 text-blue-500" />
+                        <div className="h-full flex flex-col items-center justify-center text-center p-6 my-6">
+                          <div className="bg-blue-100/50 rounded-full p-6 mb-4">
+                            <Bot className="h-16 w-16 text-blue-500" />
                           </div>
-                          <h3 className="text-2xl font-bold text-gray-800 mb-3">Welcome to AI Research Assistant</h3>
-                          <p className="text-gray-600 max-w-lg mb-8 text-lg">I can help you analyze research papers, answer questions, and more. Try uploading a document or asking me a question!</p>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-2xl">
+                          <h3 className="text-xl font-bold text-gray-800 mb-2">Welcome to AI Research Assistant</h3>
+                          <p className="text-gray-600 max-w-lg mb-6 text-base">I can help you analyze research papers, answer questions, and more. Try uploading a document or asking me a question!</p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full max-w-2xl">
                             {[
                               "What's the main finding in my paper?",
                               "Can you summarize this research?",
@@ -334,9 +352,9 @@ const AiAssistant = () => {
                               <button 
                                 key={suggestion}
                                 onClick={() => setInput(suggestion)}
-                                className="bg-white hover:bg-blue-50 transition-colors p-4 rounded-xl shadow-sm border border-blue-100 text-left text-gray-700 hover:text-blue-700 flex items-start"
+                                className="bg-white hover:bg-blue-50 transition-colors p-3 rounded-xl shadow-sm border border-blue-100 text-left text-gray-700 hover:text-blue-700 flex items-start text-sm"
                               >
-                                <MessageSquare className="h-5 w-5 mr-2 text-blue-500 flex-shrink-0 mt-0.5" />
+                                <MessageSquare className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0 mt-0.5" />
                                 <span>{suggestion}</span>
                               </button>
                             ))}
@@ -369,7 +387,7 @@ const AiAssistant = () => {
                                     : 'bg-white border border-gray-100'
                                 }`}
                               >
-                                <div className="prose prose-sm md:prose-base">
+                                <div className="prose prose-sm">
                                   {message.content}
                                 </div>
                                 {message.files && (
@@ -405,77 +423,152 @@ const AiAssistant = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="files" className="flex-1 flex bg-red">
-                  <div className="w-1/2 flex flex-col bg-white border-r">
-                    <div className="flex-shrink-0 p-4 border-b bg-white">
-                      <h3 className="text-base font-semibold text-gray-700 flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Uploaded Files ({files.length})
-                      </h3>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-4">
-                      {files.length > 0 ? (
-                        files.map((file) => (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            key={file.id}
-                            className="p-3 rounded-lg border bg-gray-50 flex justify-between items-center"
-                          >
-                            <div className="flex-1 min-w-0 pr-2">
-                              <p className="font-medium text-sm md:text-base truncate">{file.name}</p>
-                              <p className="text-xs md:text-sm text-gray-500">
-                                {new Date(file.uploadTime).toLocaleString()}
-                              </p>
-                              {file.url && (
-                                <a 
-                                  href={file.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-blue-500 hover:text-blue-600 inline-block mt-1"
-                                >
-                                  View PDF
-                                </a>
-                              )}
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => deleteFile(file.id)}
-                              className="h-8 w-8 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </motion.div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                          <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                          <h3 className="text-base font-medium text-gray-600 mb-1">No files uploaded</h3>
-                          <p className="text-sm text-gray-500">Upload files to get started</p>
+                <TabsContent value="files" className="flex-1 flex flex-col">
+                  <div className="grid grid-cols-12 h-full">
+                    {/* Left Panel (File Browser) - Expanded to use more space */}
+                    <div className="col-span-7 bg-white flex flex-col h-full border-r">
+                      <div className="p-3 border-b flex items-center justify-between">
+                        <h3 className="text-base font-semibold text-gray-700 flex items-center gap-2">
+                          <FileText className="h-4 w-4" />
+                          Document Library
+                        </h3>
+                        <div className="relative w-48">
+                          <Input 
+                            placeholder="Search files..." 
+                            className="pl-8 h-8 text-sm"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                          />
+                          <Search className="h-4 w-4 absolute left-2 top-2 text-gray-400" />
                         </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="w-1/2 p-4 border-l">
-                    <div className="space-y-4">
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <h3 className="font-semibold text-blue-700 mb-2">How to use Files:</h3>
-                        <ol className="list-decimal pl-5 text-blue-800 space-y-2 text-sm">
-                          <li>Upload your research papers using the form below</li>
-                          <li>Files will be processed for AI analysis</li>
-                          <li>Return to Chat to ask questions about your papers</li>
-                          <li>View uploaded files in the list on the left</li>
-                        </ol>
                       </div>
+                      
+                      {/* Tabs for file organization */}
+                      <div className="border-b">
+                        <div className="flex">
+                          <button className="py-2 px-4 text-sm font-medium border-b-2 border-blue-500 text-blue-700">
+                            All Files ({files.length})
+                          </button>
+                          <button className="py-2 px-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+                            Recent
+                          </button>
+                          <button className="py-2 px-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+                            Favorites
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1 overflow-y-auto p-3">
+                        {filteredFiles.length > 0 ? (
+                          <div className="grid grid-cols-2 gap-3">
+                            {filteredFiles.map((file) => (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                key={file.id}
+                                className="p-3 rounded-lg border hover:border-blue-200 bg-white hover:bg-blue-50 transition-colors shadow-sm"
+                              >
+                                <div className="flex items-center mb-2">
+                                  <div className="w-10 h-10 rounded bg-blue-100 flex items-center justify-center mr-3">
+                                    <FileText className="h-5 w-5 text-blue-500" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm truncate">{file.name}</p>
+                                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                                      <Clock className="h-3 w-3 inline" />
+                                      {new Date(file.uploadTime).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                                  {file.url && (
+                                    <a 
+                                      href={file.url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-blue-500 hover:text-blue-600 flex items-center"
+                                    >
+                                      <Info className="h-3 w-3 mr-1" />
+                                      View
+                                    </a>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => deleteFile(file.id)}
+                                    className="h-6 p-1 text-xs hover:bg-red-50 text-red-500 rounded hover:text-red-600"
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Delete
+                                  </Button>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                            <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                            <h3 className="text-base font-medium text-gray-600 mb-1">No files found</h3>
+                            <p className="text-sm text-gray-500">
+                              {searchTerm ? "Try a different search term" : "Upload files to get started"}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                      <div className="bg-white p-4 rounded-lg border">
-                        <h3 className="font-semibold text-gray-700 mb-3">Upload New File</h3>
-                        <FileUpload 
-                          sessionId={sessionId}
-                          onUploadComplete={handleFileUpload}
-                        />
+                    {/* Right Panel (Upload & Info) */}
+                    <div className="col-span-5 flex flex-col">
+                      <div className="bg-blue-50 p-4 h-full">
+                        <div className="bg-white p-4 rounded-lg border shadow-sm mb-4">
+                          <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
+                            <Upload className="h-4 w-4 mr-2 text-blue-500" />
+                            Upload Research Paper
+                          </h3>
+                          <FileUpload 
+                            sessionId={sessionId}
+                            onUploadComplete={handleFileUpload}
+                          />
+                          
+                          <div className="mt-4 pt-4 border-t border-gray-100">
+                            <p className="text-xs text-gray-500 mb-2">Supported formats: PDF, DOCX, TXT</p>
+                            <p className="text-xs text-gray-500">Maximum file size: 10MB</p>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white p-4 rounded-lg border shadow-sm mb-4">
+                          <h3 className="font-semibold text-gray-700 mb-3">How to use Files:</h3>
+                          <ol className="list-decimal pl-5 text-gray-600 space-y-2 text-sm">
+                            <li>Upload your research papers</li>
+                            <li>Files will be processed for AI analysis</li>
+                            <li>Switch to Chat to ask questions about papers</li>
+                            <li>View and manage all files in the library</li>
+                          </ol>
+                        </div>
+                        
+                        {/* Recent Activity Section */}
+                        <div className="bg-white p-4 rounded-lg border shadow-sm">
+                          <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
+                            <Clock className="h-4 w-4 mr-2 text-blue-500" />
+                            Recent Uploads
+                          </h3>
+                          
+                          {recentUploads.length > 0 ? (
+                            <div className="space-y-2">
+                              {recentUploads.map(file => (
+                                <div key={file.id} className="flex items-center p-2 hover:bg-gray-50 rounded">
+                                  <FileText className="h-4 w-4 text-blue-500 mr-2" />
+                                  <div className="flex-1">
+                                    <p className="text-sm font-medium truncate">{file.name}</p>
+                                    <p className="text-xs text-gray-500">{new Date(file.date).toLocaleDateString()}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500">No recent uploads</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -545,11 +638,11 @@ const AiAssistant = () => {
           >
             <Button
               onClick={() => setIsOpen(true)}
-              className="group relative rounded-full h-16 w-16 md:h-20 md:w-20 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 p-0 flex flex-col items-center justify-center gap-1"
+              className="group relative rounded-full h-16 w-16 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 p-0 flex flex-col items-center justify-center gap-1"
             >
               <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
-              <Bot className="h-6 w-6 md:h-8 md:w-8" />
-              <span className="text-xs md:text-sm font-bold">Ask AI</span>
+              <Bot className="h-6 w-6" />
+              <span className="text-xs font-bold">Ask AI</span>
             </Button>
           </motion.div>
         )}
