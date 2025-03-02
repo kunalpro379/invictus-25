@@ -96,7 +96,7 @@ PORT=               # Server port number (e.g., 3000)
 
 > ⚠️ Note: Never commit the actual `.env` file to version control. Keep your credentials secure!
 
-## Architecture
+## project directory structure
 
 ```
 .
@@ -140,31 +140,32 @@ PORT=               # Server port number (e.g., 3000)
 ## System Architecture
 ![System Architecture](/image.jpg)
 
-## Architecture Breakdown
-```
-
 ## Technologies Used
 
+
 ### Frontend
+```
 - React with TypeScript
 - TailwindCSS for styling
 - Socket.io for real-time features
 - PDF.js for document viewing
-
+```
 ### Backend
+```
 - Node.js & Express
 - MongoDB for data storage
 - WebSocket for real-time updates
 - JWT authentication
-
+```
 ### Model Server
+```
 - Flask for API endpoints
 - Groq LLM for paper analysis
 - PyPDF2 for PDF processing
 - langchain for context management
-
+```
 ## Key Solutions
-
+```
 1. **Centralized Repository**
    - Single platform for research papers
    - Integrated dataset management
@@ -187,9 +188,11 @@ PORT=               # Server port number (e.g., 3000)
    - Cross-disciplinary recommendations
    - Citation network analysis
    - Research impact metrics
-
+```
 ## Security & Scalability
+```
 - End-to-end encryption for sensitive data
 - Microservices architecture for scalability
 - Efficient data indexing and retrieval
 - Regular security audits
+```
