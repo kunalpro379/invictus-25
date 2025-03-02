@@ -15,6 +15,7 @@ import UpdateProfile from "./pages/update-profile";
 import News from "./pages/news";
 import Connections from "./pages/connections";
 import Messages from "./pages/messages";
+import ConnectionsList from "./pages/ConnectionsList";
 
 
 const router = createBrowserRouter([
@@ -92,6 +93,12 @@ const router = createBrowserRouter([
       {
         path: "/connections",
         element: <Connections />,
+      },
+      { path: "/my-connections", 
+        element: <ConnectionsList /> 
+      },
+      { path: "/messages/:userId", 
+        element: <Messages /> 
       },
       { 
         path: "/messages", 

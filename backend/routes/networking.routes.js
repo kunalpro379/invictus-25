@@ -21,6 +21,62 @@ const searchSchema = zod.object({
     skip: zod.string().regex(/^\d+$/).transform(Number).optional(),
 });
 
+router.post("/connect/:userId", authMiddleware, async (req, res) => {
+    try {
+        const currentUserId = req.user._id || req.user.id;
+        const targetUserId = req.params.userId;
+
+        if (!currentUserId || !targetUserId) {
+            return res.status(400).json({ message: "User IDs are required" });
+        }
+
+        if (currentUserId === targetUserId) {
+            return res.status(400).json({ message: "Cannot connect to yourself" });
+        }
+
+        const currentUser = await User.findById(currentUserId);
+        const targetUser = await User.findById(targetUserId);
+
+        if (!currentUser || !targetUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (!currentUser.connections.includes(targetUserId)) {
+            currentUser.connections.push(targetUserId);
+            await currentUser.save();
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Connection added successfully",
+            connections: currentUser.connections,
+        });
+    } catch (error) {
+        console.error("Connect User Error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+// Get user connections
+router.get("/connections", authMiddleware, async (req, res) => {
+    try {
+        const currentUserId = req.user._id || req.user.id;
+        const user = await User.findById(currentUserId).populate("connections", "-password -username");
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            connections: user.connections,
+        });
+    } catch (error) {
+        console.error("Fetch Connections Error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
 // Get all users with pagination
 router.get("/users", authMiddleware, async (req, res) => {
     try {
