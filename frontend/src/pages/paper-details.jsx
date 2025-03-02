@@ -305,51 +305,7 @@ export default function PaperDetails() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-            {/* Header */}
-            <header
-                className={`fixed w-full z-50 transition-all duration-300 ${
-                    scrolled
-                        ? "bg-white/80 backdrop-blur-md shadow-lg"
-                        : "bg-transparent"
-                }`}
-            >
-                <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-                    <motion.a
-                        href="/"
-                        className="flex items-center space-x-3"
-                        whileHover={{ scale: 1.05 }}
-                    >
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl blur-sm opacity-80" />
-                            <div className="relative h-12 w-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                                <span className="text-2xl font-bold text-white">
-                                    H
-                                </span>
-                            </div>
-                        </div>
-                        <span
-                            className={`text-xl font-bold transition-colors duration-300 ${
-                                scrolled
-                                    ? "bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
-                                    : "text-gray-800"
-                            }`}
-                        >
-                            Hackathon Starter
-                        </span>
-                    </motion.a>
-
-                    <div className="flex items-center gap-4">
-                        <Button variant="outline">
-                            <a href="/login">Login</a>
-                        </Button>
-                        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white">
-                            <a href="/signup">Get Started</a>
-                        </Button>
-                    </div>
-                </div>
-            </header>
-
-            <main className="container mx-auto px-4 pt-28 pb-16">
+            <main className="container mx-auto px-4 pt-8 pb-16">
                 <div className="max-w-4xl mx-auto">
                     {/* Paper Header */}
                     <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
@@ -417,7 +373,7 @@ export default function PaperDetails() {
                     </div>
 
                     {/* Tabs */}
-                    <Tabs defaultValue="fulltext">
+                    <Tabs defaultValue="overview">
                         <TabsList className="w-full grid grid-cols-4 mb-6">
                             <TabsTrigger value="overview" className="px-4 py-2">
                                 Overview
