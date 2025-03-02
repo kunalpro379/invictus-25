@@ -7,7 +7,8 @@ import PaperDetails from "./pages/paper-details";
 import Datasets from "./pages/datasets";
 import DatasetUpload from "./pages/dataset-upload";
 import DatasetDetail from "./pages/DatasetDetail";
-import AuthenticatedLayout from "./components/layout/authenticated-layout"; // Adjust path
+import DashboardLayout from "./components/layout/DashboardLayout";
+import AuthenticatedLayout from "./components/layout/authenticated-layout";
 import Articles from "./pages/articles"; 
 import ProfileForm from "./pages/ProfileForm";
 import UpdateProfile from "./pages/update-profile";
@@ -28,6 +29,23 @@ const router = createBrowserRouter([
   {
     path: "/signup",
     element: <SignupPage />,
+  },
+
+  // Dashboard Routes wrapped in DashboardLayout
+  {
+    path: "/dashboard",
+    element: <DashboardLayout />,
+    children: [
+      {
+        path: "connections",
+        element: <Connections />,
+      },
+      // Redirect /dashboard to /dashboard/connections
+      {
+        path: "",
+        element: <Navigate to="connections" />,
+      },
+    ],
   },
 
   // Authenticated Routes wrapped in AuthenticatedLayout
@@ -51,28 +69,20 @@ const router = createBrowserRouter([
         element: <DatasetUpload />,
       },
       {
+      path: "/news",
+      element: <News />,
+      },
+      {
         path: "/dataset/:id",
         element: <DatasetDetail />,
       },
       {
-        path: "/profile",
-        element: <ProfileForm />,
-      },
-      {
         path: "/update-profile",
-        element: <UpdateProfile />, 
+        element: <ProfileForm />,
       },
       {
         path: "/articles",
         element: <Articles />,
-      },
-      {
-        path: "/news",
-        element: <News />,
-      },
-      {
-        path: "/connections",
-        element: <Connections />,
       },
     ],
   },

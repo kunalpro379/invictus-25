@@ -8,6 +8,7 @@ require("dotenv").config({
 
 const rootRouter = require("./routes/index");
 const networkingRoutes = require("./routes/networking.routes");
+const uploadRouter = require("./routes/upload.routes");
 const newsRoutes = require("./routes/news.routes");
 
 if (!process.env.MONGODB_URI || !process.env.JWT_SECRET) {
@@ -23,21 +24,32 @@ mongoose
 const app = express();
 app.use(
     cors({
-        origin: "*",
-        methods: ["GET", "POST", "PUT", "DELETE"],
-        allowedHeaders: ["Content-Type", "Authorization"],
+        origin: process.env.NODE_ENV === 'production' 
+            ? process.env.FRONTEND_URL 
+            : ['http://localhost:5173', 'http://localhost:3000'],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
     })
 );
 app.use(express.json());
 app.use("/api/v1", rootRouter);
 app.use("/api/network", networkingRoutes);
 app.use("/api/news", newsRoutes);
-
+app.use("/api/upload", uploadRouter);
 // Serve static files if frontend exists
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 app.get("*", (req, res) =>
     res.sendFile(path.join(__dirname, "../frontend/dist", "index.html"))
 );
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(err.status || 500).json({
+        error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+    });
+});
 
 const PORT = process.env.PORT || 3000;
 // Listen on all network interfaces (0.0.0.0) instead of just localhost
