@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import { AuthProvider } from '@/contexts/AuthContext';
 import LoginPage from "./pages/login";
 import SignupPage from "./pages/signup";
 import LandingPage from "./pages/landing";
@@ -78,8 +79,13 @@ const router = createBrowserRouter([
       },
       {
         path: "/update-profile",
-        element: <ProfileForm />,
+        element: <UpdateProfile />,
       },
+      {
+        path: "/connections",
+        element: <Connections />,
+      },
+      
       {
         path: "/articles",
         element: <Articles />,
@@ -95,7 +101,11 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  );
 }
 
 export default App;

@@ -2,6 +2,8 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva } from "class-variance-authority";
 import { PanelLeft } from "lucide-react"
+import { useNavigate } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -301,16 +303,45 @@ const SidebarInput = React.forwardRef(({ className, ...props }, ref) => {
 })
 SidebarInput.displayName = "SidebarInput"
 
-const SidebarHeader = React.forwardRef(({ className, ...props }, ref) => {
+const SidebarHeader = React.forwardRef(({ user, className, ...props }, ref) => {
+  const navigate = useNavigate();
+
   return (
-    (<div
+    <div
       ref={ref}
       data-sidebar="header"
-      className={cn("flex flex-col gap-2 p-2", className)}
-      {...props} />)
+      className={cn("flex flex-col gap-4 p-4", className)}
+      {...props}
+    >
+      <div className="flex items-center gap-4">
+        <Avatar className="h-16 w-16">
+          <AvatarImage src={user?.profileImage || "/default-avatar.png"} />
+          <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white text-xl">
+            {user?.firstName?.[0]}
+            {user?.lastName?.[0]}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 group-data-[collapsible=icon]:hidden">
+          <p className="font-semibold text-sidebar-foreground">
+            {user?.firstName} {user?.lastName}
+          </p>
+          <p className="text-sm text-sidebar-foreground/70">{user?.instituteName || 'Researcher'}</p>
+          <p className="text-xs text-sidebar-foreground/50 mt-1">{user?.email}</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2 group-data-[collapsible=icon]:hidden">
+        <div className="bg-sidebar-accent p-3 rounded-lg text-center">
+          <div className="font-semibold text-sidebar-foreground">{user?.papers?.length || 0}</div>
+          <div className="text-xs text-sidebar-foreground/70">Papers</div>
+        </div>
+        <div className="bg-sidebar-accent p-3 rounded-lg text-center">
+          <div className="font-semibold text-sidebar-foreground">{user?.experience || 0}</div>
+          <div className="text-xs text-sidebar-foreground/70">Years Exp.</div>
+        </div>
+      </div>
+    </div>
   );
-})
-SidebarHeader.displayName = "SidebarHeader"
+});
 
 const SidebarFooter = React.forwardRef(({ className, ...props }, ref) => {
   return (
@@ -428,8 +459,7 @@ const sidebarMenuButtonVariants = cva(
     variants: {
       variant: {
         default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        outline:
-          "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
+        outline: "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
       },
       size: {
         default: "h-8 text-sm",
@@ -445,15 +475,7 @@ const sidebarMenuButtonVariants = cva(
 )
 
 const SidebarMenuButton = React.forwardRef((
-  {
-    asChild = false,
-    isActive = false,
-    variant = "default",
-    size = "default",
-    tooltip,
-    className,
-    ...props
-  },
+  { asChild = false, isActive = false, variant = "default", size = "default", tooltip, className, ...props },
   ref
 ) => {
   const Comp = asChild ? Slot : "button"
@@ -480,14 +502,14 @@ const SidebarMenuButton = React.forwardRef((
   }
 
   return (
-    (<Tooltip>
+    <Tooltip>
       <TooltipTrigger asChild>{button}</TooltipTrigger>
       <TooltipContent
         side="right"
         align="center"
         hidden={state !== "collapsed" || isMobile}
         {...tooltip} />
-    </Tooltip>)
+    </Tooltip>
   );
 })
 SidebarMenuButton.displayName = "SidebarMenuButton"
@@ -507,8 +529,7 @@ const SidebarMenuAction = React.forwardRef(({ className, asChild = false, showOn
         "peer-data-[size=default]/menu-button:top-1.5",
         "peer-data-[size=lg]/menu-button:top-2.5",
         "group-data-[collapsible=icon]:hidden",
-        showOnHover &&
-          "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-sidebar-accent-foreground md:opacity-0",
+        showOnHover && "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-sidebar-accent-foreground md:opacity-0",
         className
       )}
       {...props} />)
