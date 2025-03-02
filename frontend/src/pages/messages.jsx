@@ -1,68 +1,98 @@
-// pages/messages.jsx
-import React from "react";
-import { useLocation } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 
 const Messages = () => {
-  const { state } = useLocation();
-  const { currentUser } = state || {};
+  const { userId } = useParams(); // Get the target user ID from URL
+  const [targetUser, setTargetUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  const API_BASE_URL = "http://localhost:3000/api/network";
 
-  if (!currentUser) {
-    return <div className="container mx-auto p-4">No user data available. Please go back to Connections.</div>;
-  }
+  const fetchUserById = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTargetUser(response.data.user);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      setError("Failed to load user data.");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+    } else {
+      fetchUserById();
+    }
+  }, [token, userId, navigate]);
 
   const getInitials = (firstName, lastName) => {
     return `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase();
   };
 
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Messages</h1>
+  const handleBack = () => {
+    navigate("/connections");
+  };
 
-      {/* Current User Info */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Current User</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center gap-4">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={currentUser.profileImage} alt={`${currentUser.firstName} ${currentUser.lastName}`} />
-            <AvatarFallback>{getInitials(currentUser.firstName, currentUser.lastName)}</AvatarFallback>
+  if (loading) {
+    return (
+      <div className="container mx-auto p-4 flex items-center justify-center min-h-screen">
+        <p className="text-gray-600 text-lg">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error || !targetUser) {
+    return (
+      <div className="container mx-auto p-4">
+        <p className="text-red-500">{error || "User not found."}</p>
+        <Button onClick={handleBack} className="mt-4">Back to Connections</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-6 min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">
+          Messages with {targetUser.firstName} {targetUser.lastName}
+        </h1>
+        <Button
+          variant="outline"
+          className="flex items-center gap-2 text-gray-700 border-gray-300 hover:bg-gray-200"
+          onClick={handleBack}
+        >
+          <span>←</span> Back to Connections
+        </Button>
+      </div>
+
+      <Card className="bg-white shadow-sm border border-gray-200">
+        <CardHeader className="flex items-center gap-4 border-b border-gray-200">
+          <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
+            <AvatarImage src={targetUser.profileImage} alt={`${targetUser.firstName} ${targetUser.lastName}`} />
+            <AvatarFallback className="bg-blue-600 text-white">
+              {getInitials(targetUser.firstName, targetUser.lastName)}
+            </AvatarFallback>
           </Avatar>
-          <div>
-            <p><strong>Name:</strong> {currentUser.firstName} {currentUser.lastName}</p>
-            <p><strong>Institute:</strong> {currentUser.instituteName}</p>
-            <p><strong>Interests:</strong> {currentUser.interests}</p>
-          </div>
+          <CardTitle className="text-lg font-semibold text-gray-900">
+            {targetUser.firstName} {targetUser.lastName}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
+          <p className="text-gray-600">Chat functionality coming soon!</p>
+          {/* Placeholder for future chat implementation */}
         </CardContent>
       </Card>
-
-      {/* Connected Users */}
-      <h2 className="text-2xl font-semibold mb-4">Connected Users</h2>
-      {currentUser.connections.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {currentUser.connections.map((connectedUser) => (
-            <Card key={connectedUser._id}>
-              <CardHeader>
-                <CardTitle>{connectedUser.firstName} {connectedUser.lastName}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex items-center gap-4">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={connectedUser.profileImage} alt={`${connectedUser.firstName} ${connectedUser.lastName}`} />
-                  <AvatarFallback>{getInitials(connectedUser.firstName, connectedUser.lastName)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p><strong>Institute:</strong> {connectedUser.instituteName}</p>
-                  <p><strong>Interests:</strong> {connectedUser.interests}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <p>No connections yet.</p>
-      )}
     </div>
   );
 };
