@@ -347,6 +347,7 @@ const ConnectionsList = () => {
                             onClick={() =>
                                 handleRemoveConnection(confirmDialog.userId)
                             }
+                            className="font-bold text-red-700 hover:text-white border border-red-700 hover:bg-red-700"
                         >
                             Remove Connection
                         </Button>
