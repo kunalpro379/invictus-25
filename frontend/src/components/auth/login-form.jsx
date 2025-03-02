@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import axios from "axios";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowRightLeft, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,6 @@ const loginSchema = z.object({
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
 
   const {
     register,
@@ -72,9 +71,20 @@ export function LoginForm() {
       setIsLoading(false);
     }
   };
+  const navigate = useNavigate();
 
+  const handleGoBack = () => {
+    navigate("/"); // Redirects to the root path (localhost:5173/)
+  };
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto p-2">
+<div
+      className="inline-flex items-center gap-2 p-4 cursor-pointer hover:bg-gray-100 rounded-lg transition-colors duration-200"
+      onClick={handleGoBack}
+    >
+      <ArrowLeft className="w-5 h-5 text-gray-600" />
+      <span className="text-sm font-medium text-gray-700">Go Back</span>
+    </div>
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
         <CardDescription className="text-center">Enter your email and password to access your account</CardDescription>
