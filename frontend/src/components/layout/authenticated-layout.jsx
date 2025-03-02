@@ -1,13 +1,13 @@
-// components/layout/authenticated-layout.jsx
 import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import axios from "axios";
-import AiAssistant from '@/components/AiAssistant';
+import AiAssistant from "@/components/AiAssistant";
 
 const AuthenticatedLayout = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const isAuthenticated = !!localStorage.getItem("token");
 
   const fetchUserData = async (token) => {
@@ -20,6 +20,10 @@ const AuthenticatedLayout = () => {
       console.error("Error fetching user data:", err.response?.data || err.message);
       return null;
     }
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
   useEffect(() => {
@@ -50,8 +54,12 @@ const AuthenticatedLayout = () => {
 
   return (
     <div className="flex">
-      <Sidebar user={user} />
-      <main className="flex-1 ml-64 p-6 min-h-screen bg-gray-50">
+      <Sidebar user={user} isCollapsed={isSidebarCollapsed} toggleSidebar={toggleSidebar} />
+      <main
+        className={`flex-1 p-6 min-h-screen bg-gray-50 transition-all duration-300 ${
+          isSidebarCollapsed ? "ml-16" : "ml-64"
+        }`}
+      >
         <Outlet />
       </main>
       <AiAssistant />
