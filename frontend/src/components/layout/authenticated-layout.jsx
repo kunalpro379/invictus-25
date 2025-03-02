@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import axios from "axios";
-import AiAssistant from "@/components/AiAssistant";
+import AiAssistant from "../../AiAssistant";
 
 const AuthenticatedLayout = () => {
   const navigate = useNavigate();

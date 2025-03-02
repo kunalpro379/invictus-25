@@ -269,54 +269,64 @@ const AiAssistant = () => {
             } bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-200/50 flex flex-col overflow-hidden`}
           >
             {/* Header */}
-            <div className="p-4 md:p-6 border-b flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-2xl">
-              <div className="flex items-center gap-3">
-                <div className="p-2 md:p-3 bg-white/20 rounded-xl">
-                  <Bot className="h-5 w-5 md:h-6 md:w-6" />
+            <div className="border-b bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-2xl">
+              <div className="p-4 md:p-6 flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 md:p-3 bg-white/20 rounded-xl">
+                      <Bot className="h-5 w-5 md:h-6 md:w-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg md:text-xl font-semibold tracking-tight">AI Research Assistant</h3>
+                      <p className="text-xs md:text-sm text-blue-100 font-medium">Always here to help</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      className="hover:bg-white/20 text-white h-8 w-8 md:h-10 md:w-10"
+                    >
+                      {isExpanded ? 
+                        <Minimize2 className="h-4 w-4 md:h-5 md:w-5" /> : 
+                        <Maximize2 className="h-4 w-4 md:h-5 md:w-5" />
+                      }
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => setIsOpen(false)}
+                      className="hover:bg-white/20 text-white h-8 w-8 md:h-10 md:w-10"
+                    >
+                      <X className="h-4 w-4 md:h-5 md:w-5" />
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg md:text-xl font-semibold tracking-tight">AI Research Assistant</h3>
-                  <p className="text-xs md:text-sm text-blue-100 font-medium">Always here to help</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 md:gap-3">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  className="hover:bg-white/20 text-white h-8 w-8 md:h-10 md:w-10"
-                >
-                  {isExpanded ? 
-                    <Minimize2 className="h-4 w-4 md:h-5 md:w-5" /> : 
-                    <Maximize2 className="h-4 w-4 md:h-5 md:w-5" />
-                  }
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setIsOpen(false)}
-                  className="hover:bg-white/20 text-white h-8 w-8 md:h-10 md:w-10"
-                >
-                  <X className="h-4 w-4 md:h-5 md:w-5" />
-                </Button>
+
+                <TabsList className="bg-white/10 border-0 w-fit">
+                  <TabsTrigger 
+                    value="chat" 
+                    className="data-[state=active]:bg-white/20 text-white data-[state=active]:text-white"
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Chat
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="files" 
+                    className="data-[state=active]:bg-white/20 text-white data-[state=active]:text-white"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Files ({files.length})
+                  </TabsTrigger>
+                </TabsList>
               </div>
             </div>
 
             {/* Main Content Area */}
             <div className="flex-1 overflow-hidden">
               <Tabs defaultValue="chat" className="h-full flex flex-col">
-                <TabsList className="flex-shrink-0 px-3 md:px-4 py-2 border-b bg-white">
-                  <TabsTrigger value="chat" className="flex gap-1 md:gap-2 items-center text-xs md:text-sm data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
-                    <MessageSquare className="h-3 w-3 md:h-4 md:w-4" />
-                    Chat
-                  </TabsTrigger>
-                  <TabsTrigger value="files" className="flex gap-1 md:gap-2 items-center text-xs md:text-sm data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
-                    <FileText className="h-3 w-3 md:h-4 md:w-4" />
-                    Files ({files.length})
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* Chat Content */}
+                {/* Remove the old tabs section and continue with TabsContent */}
                 <TabsContent value="chat" className="flex-1 flex flex-col overflow-hidden">
                   <div className="flex-1 overflow-y-auto">
                     <div className="p-4 space-y-6 max-w-4xl mx-auto pb-4"> 
