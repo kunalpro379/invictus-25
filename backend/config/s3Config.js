@@ -9,6 +9,7 @@ if (missingVars.length > 0) {
     process.exit(1);
 }
 
+// Create S3 client using environment variables
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
     credentials: {
