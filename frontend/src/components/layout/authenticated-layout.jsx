@@ -1,6 +1,7 @@
 import React from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
+import AiAssistant from '@/components/AiAssistant';
 
 const AuthenticatedLayout = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const AuthenticatedLayout = () => {
       <main className="flex-1 ml-64 p-6 min-h-screen bg-gray-50">
         <Outlet />
       </main>
+      <AiAssistant />
     </div>
   );
 };
