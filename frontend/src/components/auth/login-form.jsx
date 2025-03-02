@@ -35,6 +35,18 @@ export function LoginForm() {
     },
   });
 
+  const fetchUserData = async (token) => {
+    try {
+      const res = await axios.get("http://localhost:3000/api/v1/users/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.user;
+    } catch (err) {
+      console.error("Error fetching user data:", err.response?.data || err.message);
+      return null;
+    }
+  };
+
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
@@ -42,8 +54,18 @@ export function LoginForm() {
         username: data.email,
         password: data.password,
       });
-      localStorage.setItem("token", res.data.token);
-      navigate("/research-papers"); // Redirect to Research Papers after login
+      const token = res.data.token;
+      localStorage.setItem("token", token);
+
+      // Fetch user data after login and store it
+      const user = await fetchUserData(token);
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      } else {
+        console.warn("Failed to fetch user data after login");
+      }
+
+      navigate("/research-papers");
     } catch (err) {
       alert(err.response?.data?.message || "Sign-in failed");
     } finally {

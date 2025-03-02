@@ -117,7 +117,16 @@ const Connections = () => {
             console.error("Error fetching user by ID:", error);
         }
     };
-
+    const fetchCurrentUser = async () => {
+        try {
+          const response = await axios.get("http://localhost:3000/api/v1/users/me", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setCurrentUser(response.data.user);
+        } catch (error) {
+          console.error("Error fetching current user:", error);
+        }
+      };
     // Load initial users on mount or when sorting changes
     useEffect(() => {
         fetchUsers(true);

@@ -1,4 +1,5 @@
-import { useState } from "react";
+// pages/SignupPage.jsx
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,27 +13,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-// Schema definition
 const signupSchema = z
   .object({
     name: z.string().min(2, { message: "Name must be at least 2 characters" }),
     email: z.string().email({ message: "Please enter a valid email address" }),
-    password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+    password: z.string().min(8, { message: "Password must be at least 6 characters" }),
     confirmPassword: z.string(),
     shortBio: z.string().min(1, { message: "Short bio is required" }).max(2000),
-    interests: z
-      .string()
-      .min(1, { message: "At least one interest is required" })
-      .transform((val) => val.split(",").map((item) => item.trim())),
+    interests: z.string().min(1, { message: "At least one interest is required" }).transform((val) => val.split(",").map((item) => item.trim())),
     instituteName: z.string().min(1, { message: "Institute name is required" }),
-    papers: z
-      .array(
-        z.object({
-          name: z.string().min(1, { message: "Paper name is required" }),
-          url: z.string().url({ message: "Please enter a valid URL" }),
-        })
-      )
-      .min(1, { message: "At least one paper is required" }),
+    papers: z.array(z.object({
+      name: z.string().min(1, { message: "Paper name is required" }),
+      url: z.string().url({ message: "Please enter a valid URL" }),
+    })).min(1, { message: "At least one paper is required" }),
+    connections: z.array(z.string()).optional(), // Optional field for connections (array of user IDs)
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -65,10 +59,22 @@ export default function SignupPage() {
       interests: "",
       instituteName: "",
       papers: [{ name: "", url: "" }],
+      connections: [], // Default to empty array
     },
   });
 
-  // Validate core fields and proceed to additional fields
+  const fetchUserData = async (token) => {
+    try {
+      const res = await axios.get("http://localhost:3000/api/v1/users/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.user;
+    } catch (err) {
+      console.error("Error fetching user data:", err.response?.data || err.message);
+      return null;
+    }
+  };
+
   const handleProceed = async () => {
     const isValid = await trigger(["name", "email", "password", "confirmPassword"]);
     if (isValid) {
@@ -76,13 +82,11 @@ export default function SignupPage() {
     }
   };
 
-  // Handle adding a new paper field
   const addPaper = () => {
     setPapers([...papers, { name: "", url: "" }]);
     setValue("papers", [...papers, { name: "", url: "" }]);
   };
 
-  // Handle paper input changes
   const handlePaperChange = (index, field, value) => {
     const updatedPapers = papers.map((paper, i) =>
       i === index ? { ...paper, [field]: value } : paper
@@ -91,15 +95,13 @@ export default function SignupPage() {
     setValue("papers", updatedPapers);
   };
 
-  // Handle deleting a paper
   const deletePaper = (index) => {
-    if (papers.length === 1) return; // Prevent deleting the last paper
+    if (papers.length === 1) return;
     const updatedPapers = papers.filter((_, i) => i !== index);
     setPapers(updatedPapers);
     setValue("papers", updatedPapers);
   };
 
-  // Handle form submission
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
@@ -116,10 +118,19 @@ export default function SignupPage() {
         interests: data.interests.join(","),
         instituteName: data.instituteName,
         papers: data.papers,
+        connections: data.connections || [], // Include connections (defaults to empty array)
       };
 
       const res = await axios.post("http://localhost:3000/api/v1/users/signup", payload);
-      localStorage.setItem("token", res.data.token);
+      const token = res.data.token;
+      localStorage.setItem("token", token);
+
+      // Fetch user data after signup
+      const user = await fetchUserData(token);
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+
       navigate("/");
     } catch (err) {
       alert(err.response?.data?.message || "Signup failed");
@@ -190,9 +201,7 @@ export default function SignupPage() {
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </Button>
                 </div>
-                {errors.password && (
-                  <p className="text-sm text-red-500">{errors.password.message}</p>
-                )}
+                {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
               </div>
 
               <div className="space-y-2">
@@ -217,9 +226,7 @@ export default function SignupPage() {
                     {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </Button>
                 </div>
-                {errors.confirmPassword && (
-                  <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
-                )}
+                {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>}
               </div>
 
               <Button
@@ -231,7 +238,7 @@ export default function SignupPage() {
               </Button>
             </div>
 
-            {/* Additional Fields Section */}
+            {/* Additional Fields */}
             <AnimatePresence>
               {showAdditionalFields && (
                 <motion.div
@@ -255,9 +262,7 @@ export default function SignupPage() {
                     <p className="text-sm text-gray-500">
                       {watch("shortBio")?.length || 0}/2000
                     </p>
-                    {errors.shortBio && (
-                      <p className="text-sm text-red-500">{errors.shortBio.message}</p>
-                    )}
+                    {errors.shortBio && <p className="text-sm text-red-500">{errors.shortBio.message}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -271,16 +276,11 @@ export default function SignupPage() {
                       className="rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                       {...register("interests")}
                     />
-                    {errors.interests && (
-                      <p className="text-sm text-red-500">{errors.interests.message}</p>
-                    )}
+                    {errors.interests && <p className="text-sm text-red-500">{errors.interests.message}</p>}
                   </div>
 
                   <div className="space-y-2">
-                    <Label
-                      htmlFor="instituteName"
-                      className="text-sm font-medium text-gray-700"
-                    >
+                    <Label htmlFor="instituteName" className="text-sm font-medium text-gray-700">
                       Institute Name
                     </Label>
                     <Input
@@ -290,9 +290,7 @@ export default function SignupPage() {
                       className="rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                       {...register("instituteName")}
                     />
-                    {errors.instituteName && (
-                      <p className="text-sm text-red-500">{errors.instituteName.message}</p>
-                    )}
+                    {errors.instituteName && <p className="text-sm text-red-500">{errors.instituteName.message}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -323,9 +321,7 @@ export default function SignupPage() {
                         </Button>
                       </div>
                     ))}
-                    {errors.papers && (
-                      <p className="text-sm text-red-500">{errors.papers.message}</p>
-                    )}
+                    {errors.papers && <p className="text-sm text-red-500">{errors.papers.message}</p>}
                     <Button
                       type="button"
                       onClick={addPaper}
@@ -335,6 +331,7 @@ export default function SignupPage() {
                     </Button>
                   </div>
 
+                  {/* No UI for connections during signup as it’s initialized empty */}
                   <Button
                     type="submit"
                     className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-md py-2 transition duration-200"
