@@ -518,56 +518,57 @@ const AiAssistant = () => {
                     </div>
 
                     {/* Right Panel (Upload & Info) */}
-                    <div className="col-span-5 flex flex-col">
-                      <div className="bg-blue-50 p-4 h-full">
-                        <div className="bg-white p-4 rounded-lg border shadow-sm mb-4">
-                          <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
-                            <Upload className="h-4 w-4 mr-2 text-blue-500" />
-                            Upload Research Paper
-                          </h3>
-                          <FileUpload 
-                            sessionId={sessionId}
-                            onUploadComplete={handleFileUpload}
-                          />
-                          
-                          <div className="mt-4 pt-4 border-t border-gray-100">
-                            <p className="text-xs text-gray-500 mb-2">Supported formats: PDF, DOCX, TXT</p>
-                            <p className="text-xs text-gray-500">Maximum file size: 10MB</p>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-white p-4 rounded-lg border shadow-sm mb-4">
-                          <h3 className="font-semibold text-gray-700 mb-3">How to use Files:</h3>
-                          <ol className="list-decimal pl-5 text-gray-600 space-y-2 text-sm">
-                            <li>Upload your research papers</li>
-                            <li>Files will be processed for AI analysis</li>
-                            <li>Switch to Chat to ask questions about papers</li>
-                            <li>View and manage all files in the library</li>
-                          </ol>
-                        </div>
-                        
-                        {/* Recent Activity Section */}
-                        <div className="bg-white p-4 rounded-lg border shadow-sm">
-                          <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
-                            <Clock className="h-4 w-4 mr-2 text-blue-500" />
-                            Recent Uploads
-                          </h3>
-                          
-                          {recentUploads.length > 0 ? (
-                            <div className="space-y-2">
-                              {recentUploads.map(file => (
-                                <div key={file.id} className="flex items-center p-2 hover:bg-gray-50 rounded">
-                                  <FileText className="h-4 w-4 text-blue-500 mr-2" />
-                                  <div className="flex-1">
-                                    <p className="text-sm font-medium truncate">{file.name}</p>
-                                    <p className="text-xs text-gray-500">{new Date(file.date).toLocaleDateString()}</p>
-                                  </div>
-                                </div>
-                              ))}
+                    <div className="col-span-5 flex flex-col h-full">
+                      <div className="h-full overflow-y-auto bg-blue-50 p-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
+                        <div className="space-y-4 pb-4">
+                          <div className="bg-white p-4 rounded-lg border shadow-sm">
+                            <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
+                              <Upload className="h-4 w-4 mr-2 text-blue-500" />
+                              Upload Research Paper
+                            </h3>
+                            <FileUpload 
+                              sessionId={sessionId}
+                              onUploadComplete={handleFileUpload}
+                            />
+                            
+                            <div className="mt-4 pt-4 border-t border-gray-100">
+                              <p className="text-xs text-gray-500 mb-2">Supported formats: PDF, DOCX, TXT</p>
+                              <p className="text-xs text-gray-500">Maximum file size: 10MB</p>
                             </div>
-                          ) : (
-                            <p className="text-sm text-gray-500">No recent uploads</p>
-                          )}
+                          </div>
+                          
+                          <div className="bg-white p-4 rounded-lg border shadow-sm">
+                            <h3 className="font-semibold text-gray-700 mb-3">How to use Files:</h3>
+                            <ol className="list-decimal pl-5 text-gray-600 space-y-2 text-sm">
+                              <li>Upload your research papers</li>
+                              <li>Files will be processed for AI analysis</li>
+                              <li>Switch to Chat to ask questions about papers</li>
+                              <li>View and manage all files in the library</li>
+                            </ol>
+                          </div>
+                          
+                          <div className="bg-white p-4 rounded-lg border shadow-sm">
+                            <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
+                              <Clock className="h-4 w-4 mr-2 text-blue-500" />
+                              Recent Uploads
+                            </h3>
+                            
+                            {recentUploads.length > 0 ? (
+                              <div className="space-y-2">
+                                {recentUploads.map(file => (
+                                  <div key={file.id} className="flex items-center p-2 hover:bg-gray-50 rounded">
+                                    <FileText className="h-4 w-4 text-blue-500 mr-2" />
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium truncate">{file.name}</p>
+                                      <p className="text-xs text-gray-500">{new Date(file.date).toLocaleDateString()}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-500">No recent uploads</p>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
