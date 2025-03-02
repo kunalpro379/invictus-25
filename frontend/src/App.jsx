@@ -16,7 +16,7 @@ import News from "./pages/news";
 import Connections from "./pages/connections";
 import Messages from "./pages/messages";
 import ConnectionsList from "./pages/ConnectionsList";
-
+import { AuthProvider } from '@/contexts/AuthContext';
 
 const router = createBrowserRouter([
   // Public Routes
@@ -115,7 +115,11 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  );
 }
 
 export default App;
