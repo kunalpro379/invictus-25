@@ -165,30 +165,36 @@ PORT=               # Server port number (e.g., 3000)
 - langchain for context management
 ```
 ## Key Solutions
-```
 1. **Centralized Repository**
+   ```
    - Single platform for research papers
    - Integrated dataset management
    - Expert network connectivity
-
-2. **AI-Driven Features**
+   ```
+3. **AI-Driven Features**
+   ```
    - Smart paper recommendations
    - Content summarization
    - Research trend analysis
    - Intelligent paper chat
+   ```
 
-3. **Collaboration Tools**
+5. **Collaboration Tools**
+   ```
    - Real-time document annotation
    - Shared workspaces
    - Discussion forums
    - Expert networking
+   ```
 
-4. **Research Discovery**
+7. **Research Discovery**
+   ```
    - Advanced semantic search
    - Cross-disciplinary recommendations
    - Citation network analysis
    - Research impact metrics
-```
+   ```
+
 ## Security & Scalability
 ```
 - End-to-end encryption for sensitive data
