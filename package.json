@@ -10,5 +10,8 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "Authentication template with JWT"
+  "description": "Authentication template with JWT",
+  "dependencies": {
+    "uuid": "^11.1.0"
+  }
 }
