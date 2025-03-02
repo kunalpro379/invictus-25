@@ -80,7 +80,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/update-profile",
-        element: <UpdateProfile />,
+        element: <ProfileForm />,
       },
       {
         path: "/articles",
