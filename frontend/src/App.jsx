@@ -79,7 +79,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/update-profile",
-        element: <ProfileForm />,
+        element: <UpdateProfile />,
       },
       {
         path: "/articles",
