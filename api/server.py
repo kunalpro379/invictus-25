@@ -9,6 +9,8 @@ import fitz  # PyMuPDF for PDF handling
 import nltk
 from nltk.tokenize import sent_tokenize
 import re
+import requests  # Add this at the top with other imports
+from flask_cors import CORS  # Add this import at the top
 
 # Download NLTK data for sentence tokenization
 nltk.download('punkt', quiet=True)
@@ -22,7 +24,7 @@ MAX_CONTENT_LENGTH = 32 * 1024 * 1024  # 32MB max file size
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Initialize Groq client
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = Groq(api_key="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")
 
 CHATBOT_SYSTEM_PROMPT = {
     "role": "system",
@@ -50,6 +52,22 @@ def extract_text_from_pdf(pdf_path):
         text += page.get_text()
     doc.close()
     return text
+
+def extract_text_from_url(url):
+    """Extract text content from a PDF URL."""
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        
+        # Create a temporary file-like object in memory
+        pdf_stream = fitz.open(stream=response.content, filetype="pdf")
+        text = ""
+        for page in pdf_stream:
+            text += page.get_text()
+        pdf_stream.close()
+        return text
+    except Exception as e:
+        raise Exception(f"Error processing PDF from URL: {str(e)}")
 
 def chunk_paper(text, max_chunk_size=4000, overlap=200):
     """Split paper into manageable chunks with overlap for context preservation."""
@@ -86,8 +104,10 @@ def allowed_file(filename):
 def trim_conversation_history(session_id):
     """Maintain conversation history within limits while preserving context."""
     global conversation_history
-    if session_id in conversation_history and len(conversation_history[session_id]) > (MAX_HISTORY * 2 + 1):  # +1 for system prompt
-        conversation_history[session_id] = [conversation_history[session_id][0], *conversation_history[session_id][-(MAX_HISTORY * 2):]]
+    if (session_id in conversation_history and 
+        len(conversation_history[session_id]) > (MAX_HISTORY * 2 + 1)):  # +1 for system prompt
+        conversation_history[session_id] = [conversation_history[session_id][0], 
+                                            *conversation_history[session_id][-(MAX_HISTORY * 2):]]
 
 def get_relevant_paper_content(query, paper_chunks, top_k=3):
     """Retrieve the most relevant chunks based on simple keyword matching."""
@@ -162,62 +182,58 @@ def get_response(session_id, user_input):
 
 @paper_chat_bp.route("/upload_paper", methods=["POST"])
 def upload_paper():
-    """Flask route to handle research paper uploads."""
-    if 'file' not in request.files:
-        return jsonify({"error": "No file part"}), 400
+    """Flask route to handle research paper uploads from URL."""
+    data = request.get_json()
     
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
+    if not data:
+        return jsonify({"error": "No JSON data received"}), 400
     
-    if not allowed_file(file.filename):
-        return jsonify({"error": "File type not allowed. Only PDF files are accepted."}), 400
+    pdf_url = data.get('url')
+    if not pdf_url:
+        return jsonify({"error": "No PDF URL provided"}), 400
     
-    session_id = request.form.get('session_id')
+    session_id = data.get('session_id')
     if not session_id:
         return jsonify({"error": "Session ID is required"}), 400
     
     try:
-        # Save the file
-        filename = secure_filename(file.filename)
+        # Extract filename from URL
+        filename = pdf_url.split('/')[-1]
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        unique_filename = f"{timestamp}_{filename}"
-        filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
-        file.save(filepath)
         
-        # Process the paper
-        paper_text = extract_text_from_pdf(filepath)
+        # Process the paper directly from URL
+        paper_text = extract_text_from_url(pdf_url)
         processed_text = preprocess_paper(paper_text)
         paper_chunks = chunk_paper(processed_text)
-        
-        # Store paper information
-        paper_info = {
-            "filename": filename,
-            "upload_time": timestamp,
-            "chunks": paper_chunks
-        }
         
         # Initialize session if needed
         if session_id not in session_papers:
             session_papers[session_id] = []
             conversation_history[session_id] = [CHATBOT_SYSTEM_PROMPT]
         
+        # Store paper information
+        paper_info = {
+            "filename": filename,
+            "upload_time": timestamp,
+            "chunks": paper_chunks,
+            "url": pdf_url
+        }
+        
         # Add paper to session
         session_papers[session_id].append(paper_info)
         
-        # Cleanup file (optional - if you don't want to store the PDFs)
-        # os.remove(filepath)
+        print(f"Added paper to session {session_id}. Total papers: {len(session_papers[session_id])}")
         
         return jsonify({
-            "success": True, 
-            "message": f"Paper '{filename}' uploaded successfully", 
-            "paper_id": len(session_papers[session_id]) - 1
+            "success": True,
+            "message": f"Paper '{filename}' processed successfully from URL",
+            "paper_id": len(session_papers[session_id]) - 1,
+            "session_papers_count": len(session_papers[session_id])
         })
         
     except Exception as e:
-        if os.path.exists(filepath):
-            os.remove(filepath)
-        return jsonify({"error": f"Error processing paper: {str(e)}"}), 500
+        print(f"Error processing paper: {str(e)}")
+        return jsonify({"error": f"Error processing paper from URL: {str(e)}"}), 500
 
 @paper_chat_bp.route("/chat", methods=["POST"])
 def chat():
@@ -282,6 +298,7 @@ def too_large(e):
 # Create Flask application
 def create_app():
     app = Flask(__name__)
+    CORS(app)  # Enable CORS for all routes
     app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
     app.register_blueprint(paper_chat_bp, url_prefix='/api')
     return app
