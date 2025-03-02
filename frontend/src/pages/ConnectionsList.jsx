@@ -321,13 +321,13 @@ const ConnectionsList = () => {
                     !open && setConfirmDialog({ open: false, userId: null })
                 }
             >
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md bg-black border border-gray-700">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
+                        <DialogTitle className="flex items-center gap-2 text-white">
                             <AlertTriangle className="h-5 w-5 text-amber-500" />
                             Confirm Removal
                         </DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription className="text-gray-300">
                             Are you sure you want to remove this connection?
                             This action cannot be undone.
                         </DialogDescription>
@@ -338,6 +338,7 @@ const ConnectionsList = () => {
                             onClick={() =>
                                 setConfirmDialog({ open: false, userId: null })
                             }
+                            className="text-white border-gray-700 hover:bg-gray-800"
                         >
                             Cancel
                         </Button>
