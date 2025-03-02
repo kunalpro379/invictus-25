@@ -4,6 +4,7 @@ const router = express.Router();
 const { authMiddleware } = require("../middleware");
 const networkingService = require("../services/networking.service");
 const zod = require("zod");
+const { User } = require("../schemas/users.schema");
 
 // Validation schemas
 const paginationSchema = zod.object({
@@ -23,7 +24,7 @@ const searchSchema = zod.object({
 
 router.post("/connect/:userId", authMiddleware, async (req, res) => {
     try {
-        const currentUserId = req.user._id || req.user.id;
+        const currentUserId = req.userId;
         const targetUserId = req.params.userId;
 
         if (!currentUserId || !targetUserId) {
@@ -31,7 +32,9 @@ router.post("/connect/:userId", authMiddleware, async (req, res) => {
         }
 
         if (currentUserId === targetUserId) {
-            return res.status(400).json({ message: "Cannot connect to yourself" });
+            return res
+                .status(400)
+                .json({ message: "Cannot connect to yourself" });
         }
 
         const currentUser = await User.findById(currentUserId);
@@ -57,11 +60,49 @@ router.post("/connect/:userId", authMiddleware, async (req, res) => {
     }
 });
 
+// Remove connection (new endpoint)
+router.delete("/remove/:userId", authMiddleware, async (req, res) => {
+    try {
+        const currentUserId = req.userId;
+        const targetUserId = req.params.userId;
+
+        if (!currentUserId || !targetUserId) {
+            return res.status(400).json({ message: "User IDs are required" });
+        }
+
+        const currentUser = await User.findById(currentUserId);
+
+        if (!currentUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Remove the connection if it exists
+        if (currentUser.connections.includes(targetUserId)) {
+            currentUser.connections = currentUser.connections.filter(
+                (conn) => conn.toString() !== targetUserId.toString()
+            );
+            await currentUser.save();
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Connection removed successfully",
+            connections: currentUser.connections,
+        });
+    } catch (error) {
+        console.error("Remove Connection Error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
 // Get user connections
 router.get("/connections", authMiddleware, async (req, res) => {
     try {
-        const currentUserId = req.user._id || req.user.id;
-        const user = await User.findById(currentUserId).populate("connections", "-password -username");
+        const currentUserId = req.userId;
+        const user = await User.findById(currentUserId).populate(
+            "connections",
+            "-password"
+        );
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
@@ -140,6 +181,34 @@ router.get("/users/:userId", authMiddleware, async (req, res) => {
             );
     } catch (error) {
         console.error("Get User By ID Error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+// Create message schema - for future chat implementation
+const messageSchema = zod.object({
+    content: zod.string().min(1).max(1000),
+    receiverId: zod.string(),
+});
+
+// Basic placeholder for future message system
+router.post("/messages", authMiddleware, async (req, res) => {
+    try {
+        const validation = messageSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({
+                message: "Invalid message",
+                errors: validation.error.errors,
+            });
+        }
+
+        // For now, just return success (will be implemented later)
+        return res.status(200).json({
+            success: true,
+            message: "Message sent successfully",
+        });
+    } catch (error) {
+        console.error("Send Message Error:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 });

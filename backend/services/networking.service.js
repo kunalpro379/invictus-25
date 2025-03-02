@@ -2,59 +2,66 @@
 const { User } = require("../schemas/users.schema");
 
 /**
- * Get all users for networking purposes
- * Excludes sensitive data like email and password
- * @param {Object} options - Optional filtering parameters
- * @returns {Object} - Result with users data or error
+ * Get all users with pagination, sorting, and filtering
+ * @param {Object} options - Pagination and sorting options
+ * @param {number} options.limit - Maximum number of users to return
+ * @param {number} options.skip - Number of users to skip
+ * @param {string} options.sortBy - Field to sort by
+ * @param {number} options.sortOrder - Sort order (1 for ascending, -1 for descending)
+ * @returns {Promise<Object>} - Result object with users and metadata
  */
 const getAllUsers = async (options = {}) => {
     try {
         const {
-            limit = 50,
+            limit = 10,
             skip = 0,
             sortBy = "firstName",
             sortOrder = 1,
         } = options;
 
-        // Build sorting object
+        // Create sort object
         const sort = {};
         sort[sortBy] = sortOrder;
 
-        // Find all users but exclude sensitive information
-        const users = await User.find({})
-            .select("-password -username") // Exclude password and email (username)
+        // Find users with pagination and sorting
+        const users = await User.find({}, "-password")
             .sort(sort)
             .skip(skip)
             .limit(limit);
 
-        // Get total count for pagination
-        const totalCount = await User.countDocuments({});
+        // Get total count for pagination metadata
+        const total = await User.countDocuments();
 
         return {
             success: true,
             status: 200,
             users,
             meta: {
-                total: totalCount,
+                total,
                 limit,
                 skip,
-                hasMore: skip + users.length < totalCount,
+                hasMore: skip + users.length < total,
             },
         };
     } catch (error) {
-        console.error("Get All Users Error:", error);
+        console.error("Get All Users Service Error:", error);
         return {
             success: false,
             status: 500,
-            message: "Error fetching users",
+            message: "Failed to fetch users",
         };
     }
 };
 
 /**
- * Search users based on provided criteria
+ * Search users by query string, institute name, or interests
  * @param {Object} searchParams - Search parameters
- * @returns {Object} - Result with matching users or error
+ * @param {string} searchParams.query - General search query
+ * @param {string} searchParams.instituteName - Institute name to filter by
+ * @param {string} searchParams.interests - Interests to filter by
+ * @param {number} searchParams.limit - Maximum number of users to return
+ * @param {number} searchParams.skip - Number of users to skip
+ * @returns {Promise<Object>} - Result object with users and metadata
  */
 const searchUsers = async (searchParams = {}) => {
     try {
@@ -62,73 +69,66 @@ const searchUsers = async (searchParams = {}) => {
             query,
             instituteName,
             interests,
-            limit = 50,
+            limit = 10,
             skip = 0,
         } = searchParams;
 
-        // Build search query
-        const searchQuery = {};
+        // Build search filter
+        const filter = {};
 
-        // Add text search if provided
         if (query) {
-            searchQuery.$or = [
+            filter.$or = [
                 { firstName: { $regex: query, $options: "i" } },
                 { lastName: { $regex: query, $options: "i" } },
-                { shortBio: { $regex: query, $options: "i" } },
+                { email: { $regex: query, $options: "i" } },
             ];
         }
 
-        // Add institution filter if provided
         if (instituteName) {
-            searchQuery.instituteName = {
-                $regex: instituteName,
-                $options: "i",
-            };
+            filter.instituteName = { $regex: instituteName, $options: "i" };
         }
 
-        // Add interests filter if provided
         if (interests) {
-            searchQuery.interests = { $regex: interests, $options: "i" };
+            filter.interests = { $regex: interests, $options: "i" };
         }
 
-        // Find matching users but exclude sensitive information
-        const users = await User.find(searchQuery)
-            .select("-password -username") // Exclude password and email
+        // Find users with filter, pagination
+        const users = await User.find(filter, "-password")
             .skip(skip)
             .limit(limit);
 
-        // Get total count for pagination
-        const totalCount = await User.countDocuments(searchQuery);
+        // Get total count for pagination metadata
+        const total = await User.countDocuments(filter);
 
         return {
             success: true,
             status: 200,
             users,
             meta: {
-                total: totalCount,
+                total,
                 limit,
                 skip,
-                hasMore: skip + users.length < totalCount,
+                hasMore: skip + users.length < total,
             },
         };
     } catch (error) {
-        console.error("Search Users Error:", error);
+        console.error("Search Users Service Error:", error);
         return {
             success: false,
             status: 500,
-            message: "Error searching users",
+            message: "Failed to search users",
         };
     }
 };
 
 /**
- * Get single user profile by ID for networking
- * @param {string} userId - User ID to fetch
- * @returns {Object} - Result with user data or error
+ * Get user by ID
+ * @param {string} userId - User ID
+ * @returns {Promise<Object>} - Result object with user data
  */
 const getUserById = async (userId) => {
     try {
-        const user = await User.findById(userId).select("-password -username"); // Exclude password and email
+        const user = await User.findById(userId, "-password");
 
         if (!user) {
             return {
@@ -144,11 +144,11 @@ const getUserById = async (userId) => {
             user,
         };
     } catch (error) {
-        console.error("Get User By ID Error:", error);
+        console.error("Get User By ID Service Error:", error);
         return {
             success: false,
             status: 500,
-            message: "Error fetching user",
+            message: "Failed to fetch user",
         };
     }
 };
