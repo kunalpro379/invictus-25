@@ -247,7 +247,7 @@ export default function NewsPage() {
                                     ) : (
                                         // Enhanced news articles display
                                         <ScrollArea className="h-[700px] pr-4">
-                                            <div className="grid grid-cols-1 gap-6">
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                                 {news.map((item) => (
                                                     <Card
                                                         key={item.guid}

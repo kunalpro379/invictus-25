@@ -19,99 +19,95 @@ import ConnectionsList from "./pages/ConnectionsList";
 import { AuthProvider } from '@/contexts/AuthContext';
 
 const router = createBrowserRouter([
-  // Public Routes
-  {
-    path: "/",
-    element: <LandingPage />,
-  },
-  {
-    path: "/login",
-    element: <LoginPage />,
-  },
-  {
-    path: "/signup",
-    element: <SignupPage />,
-  },
+    // Public Routes
+    {
+        path: "/",
+        element: <LandingPage />,
+    },
+    {
+        path: "/login",
+        element: <LoginPage />,
+    },
+    {
+        path: "/signup",
+        element: <SignupPage />,
+    },
 
-  // Dashboard Routes wrapped in DashboardLayout
-  {
-    path: "/dashboard",
-    element: <DashboardLayout />,
-    children: [
-      {
-        path: "connections",
-        element: <Connections />,
-      },
-      // Redirect /dashboard to /dashboard/connections
-      {
-        path: "",
-        element: <Navigate to="connections" />,
-      },
-    ],
-  },
+    // Dashboard Routes wrapped in DashboardLayout
+    {
+        path: "/dashboard",
+        element: <DashboardLayout />,
+        children: [
+            {
+                path: "connections",
+                element: <Connections />,
+            },
+            // Redirect /dashboard to /dashboard/connections
+            {
+                path: "",
+                element: <Navigate to="connections" />,
+            },
+        ],
+    },
 
-  // Authenticated Routes wrapped in AuthenticatedLayout
-  {
-    element: <AuthenticatedLayout />,
-    children: [
-      {
-        path: "/research-papers",
-        element: <ResearchPapers />,
-      },
-      {
-        path: "/research-papers/:id",
-        element: <PaperDetails />,
-      },
-      {
-        path: "/datasets",
-        element: <Datasets />,
-      },
-      {
-        path: "/dataset-upload",
-        element: <DatasetUpload />,
-      },
-      {
-      path: "/news",
-      element: <News />,
-      },
-      {
-        path: "/dataset/:id",
-        element: <DatasetDetail />,
-      },
-      {
-        path: "/update-profile",
-        element: <ProfileForm />,
-      },
-      {
-        path: "/articles",
-        element: <Articles />,
-      },
-      {
-        path: "/news",
-        element: <News />,
-      },
-      {
-        path: "/connections",
-        element: <Connections />,
-      },
-      { path: "/my-connections", 
-        element: <ConnectionsList /> 
-      },
-      { path: "/messages/:userId", 
-        element: <Messages /> 
-      },
-      { 
-        path: "/messages", 
-        element: <Messages /> 
-      },
-    ],
-  },
+    // Authenticated Routes wrapped in AuthenticatedLayout
+    {
+        element: <AuthenticatedLayout />,
+        children: [
+            {
+                path: "/research-papers",
+                element: <ResearchPapers />,
+            },
+            {
+                path: "/research-papers/:id",
+                element: <PaperDetails />,
+            },
+            {
+                path: "/datasets",
+                element: <Datasets />,
+            },
+            {
+                path: "/dataset-upload",
+                element: <DatasetUpload />,
+            },
+            {
+                path: "/news",
+                element: <News />,
+            },
+            {
+                path: "/dataset/:id",
+                element: <DatasetDetail />,
+            },
+            {
+                path: "/update-profile",
+                element: <ProfileForm />,
+            },
+            {
+                path: "/articles",
+                element: <Articles />,
+            },
+            {
+                path: "/news",
+                element: <News />,
+            },
+            {
+                path: "/connections",
+                element: <Connections />,
+            },
+            { path: "/my-connections", element: <ConnectionsList /> },
+            { path: "/messages/:userId", element: <Messages /> },
+            {
+                path: "/messages",
+                element: <Messages />,
+            },
+        ],
+    },
 
-  // Redirect unmatched routes
-  {
-    path: "*",
-    element: <Navigate to="/" />,
-  },
+    // Redirect unmatched routes
+    {
+        path: "*",
+        element: <Navigate to="/" />,
+    },
 ]);
 
 function App() {
